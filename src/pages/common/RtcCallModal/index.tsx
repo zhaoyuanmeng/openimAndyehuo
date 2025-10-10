@@ -132,7 +132,8 @@ const RtcCallModal: ForwardRefRenderFunction<
       <div>
         {isOverlayOpen && (
           <LiveKitRoom
-            serverUrl={authData.serverUrl}
+            // serverUrl={authData.serverUrl}
+            serverUrl='wss://im.xaxcsz.com'
             token={authData.token}
             video={invitation?.mediaType === "video"}
             audio={true}

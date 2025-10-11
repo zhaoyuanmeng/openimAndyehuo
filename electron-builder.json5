@@ -3,7 +3,7 @@
  */
 {
   appId: "io.opencorp.desktop.base",
-  productName: "OpenCorp-Base",
+  productName: "ShuCheng-Base",
   asar: true,
   asarUnpack: ["**/*.node"],
   extends: null,
@@ -68,7 +68,7 @@
   linux: {
     icon: "./dist/icons/icon.png",
     target: "deb",
-    maintainer: "opencorp-base",
+    maintainer: "ShuCheng-Base",
     artifactName: "${productName}_${version}_${arch}.${ext}",
     extraResources: [
       {
@@ -89,6 +89,6 @@
     createDesktopShortcut: true,
     createStartMenuShortcut: true,
     deleteAppDataOnUninstall: true,
-    shortcutName: "OpenCorp-Base",
-  }
+    shortcutName: "ShuCheng-Base",
+  },
 }

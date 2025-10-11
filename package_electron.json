@@ -1,5 +1,5 @@
 {
-  "name": "OpenCorp-Base",
+  "name": "ShuCheng-Base",
   "version": "3.8.3",
   "main": "dist-electron/main/index.js",
   "description": "OpenIM PC Client.",
@@ -32,8 +32,13 @@
     "node": "^14.18.0 || >=16.0.0"
   },
   "lint-staged": {
-    "src/**/*.{tsx,ts}": ["prettier --write", "eslint --fix"],
-    "*.{json,html,css,scss,xml,md}": ["prettier --write"]
+    "src/**/*.{tsx,ts}": [
+      "prettier --write",
+      "eslint --fix"
+    ],
+    "*.{json,html,css,scss,xml,md}": [
+      "prettier --write"
+    ]
   },
   "dependencies": {
     "@openim/electron-client-sdk": "^3.8.3-patch.3",

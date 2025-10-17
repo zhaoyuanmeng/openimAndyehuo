@@ -20,8 +20,9 @@
     "lint": "eslint --ext .js,.jsx,.ts,.tsx src",
     "lint:fix": "eslint --ext .js,.jsx,.ts,.tsx --fix --quiet src",
     "prepare": "husky install",
+    "clean:release": "rmdir /s /q release 2>nul & if exist release rmdir /s /q release",
     "postinstall": "patch-package",
-    "build:win": "vite build  &&  electron-builder --win --x64",
+    "build:win": "npm run clean:release && vite build  &&  electron-builder --win --x64",
     "build:win-arm": "vite build  &&  electron-builder --win --arm64",
     "build:mac": "vite build  &&  electron-builder --macos --x64",
     "build:mac-arm": "vite build  &&  electron-builder --macos --arm64"

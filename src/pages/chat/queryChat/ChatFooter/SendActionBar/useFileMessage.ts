@@ -21,6 +21,7 @@ export function useFileMessage() {
     };
 
     if (window.electronAPI) {
+      console.log("electronfile---------------", file);
       const imageMessage = (await IMSDK.createImageMessageFromFullPath(file.path!))
         .data;
       imageMessage.pictureElem!.sourcePicture.url = baseInfo.url;

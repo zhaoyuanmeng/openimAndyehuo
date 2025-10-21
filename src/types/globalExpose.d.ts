@@ -13,7 +13,7 @@ export interface IElectronAPI {
   ipcInvoke: <T = unknown>(channel: string, ...arg: any) => Promise<T>;
   ipcSendSync: <T = unknown>(channel: string, ...arg: any) => T;
   saveFileToDisk: (params: { file: File; sync?: boolean }) => Promise<string>;
-  getFileByPath: (filePath: string) => Promise<File | null>;
+  getFileByPath: (filePath: string) => Promise<{ file: File; path: string } | null>;
   startScreenshot: (hideWindow?: boolean) => Promise<void>; // 新增
 }
 

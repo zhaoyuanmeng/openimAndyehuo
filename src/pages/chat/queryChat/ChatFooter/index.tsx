@@ -13,6 +13,7 @@ import { base64toFile, fileToBase64 } from "@/utils/common";
 import SendActionBar from "./SendActionBar";
 import { useFileMessage } from "./SendActionBar/useFileMessage";
 import { useSendMessage } from "./useSendMessage";
+
 const sendActions = [
   { label: t("placeholder.sendWithEnter"), key: "enter" },
   { label: t("placeholder.sendWithShiftEnter"), key: "enterwithshift" },
@@ -23,6 +24,9 @@ i18n.on("languageChanged", () => {
   sendActions[1].label = t("placeholder.sendWithShiftEnter");
 });
 
+// 在组件外部创建 Map 存储截图路径
+const screenshotPathMap = new Map<string, string>();
+
 const ChatFooter: ForwardRefRenderFunction<unknown, unknown> = (_, ref) => {
   const [html, setHtml] = useState("");
   const latestHtml = useLatest(html);
@@ -32,20 +36,30 @@ const ChatFooter: ForwardRefRenderFunction<unknown, unknown> = (_, ref) => {
 
   useEffect(() => {
     window.screenshotPreview = async (filePath: string) => {
+      console.log("screenshotPreview 收到 filePath:", filePath);
       try {
         if (window.electronAPI) {
-          const file = await window.electronAPI.getFileByPath(filePath);
-          if (!file) return;
+          const result = await window.electronAPI.getFileByPath(filePath);
+          if (!result) return;
 
-          const base64Data = await fileToBase64(file);
+          const { file, path: originalPath } = result;
+          const correctedFile = new File([file], file.name, { type: "image/png" });
+          const base64Data = await fileToBase64(correctedFile);
+          const imgSrc = base64Data.startsWith("data:")
+            ? base64Data
+            : `data:image/png;base64,${base64Data}`;
 
-          // 确保base64数据正确，添加必要的前缀
-          const imgSrc = base64Data.startsWith('data:') ? base64Data : `data:image/png;base64,${base64Data}`;
+          // 使用 imgSrc 作为 key 存储原始文件路径
+          screenshotPathMap.set(imgSrc, originalPath);
+          console.log(
+            "存储到 Map:",
+            imgSrc.substring(0, 50) + "...",
+            "->",
+            originalPath,
+          );
 
-          // 直接将截图插入到CKEditor中
           const imgTag = `<img src="${imgSrc}" alt="screenshot" style="max-width: 200px; max-height: 200px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);" />`;
 
-          // 如果当前有内容，在末尾添加换行和图片
           const currentContent = latestHtml.current;
           const newContent = currentContent
             ? `${currentContent}<br/>${imgTag}`
@@ -71,7 +85,6 @@ const ChatFooter: ForwardRefRenderFunction<unknown, unknown> = (_, ref) => {
     const htmlContent = latestHtml.current;
     if (!htmlContent) return;
 
-    // 解析HTML内容，分离文本和图片
     const tempDiv = document.createElement("div");
     tempDiv.innerHTML = htmlContent;
 
@@ -87,20 +100,57 @@ const ChatFooter: ForwardRefRenderFunction<unknown, unknown> = (_, ref) => {
     // 发送图片消息
     for (const img of images) {
       const src = img.getAttribute("src");
-      if (src && src.startsWith("data:image")) {
+      if (!src) continue;
+
+      const filePath = screenshotPathMap.get(src);
+
+      if (filePath) {
+        console.log("从 Map 找到 filePath:", filePath);
         try {
-          // 将base64转换为File对象
+          if (window.electronAPI) {
+            const result = await window.electronAPI.getFileByPath(filePath);
+            if (result) {
+              const { file } = result;
+              // 手动添加 path 属性到 File 对象
+              Object.defineProperty(file, "path", {
+                value: filePath,
+                writable: false,
+                enumerable: true,
+                configurable: false,
+              });
+
+              const imageMessage = await getImageMessage(file);
+              await sendMessage({ message: imageMessage });
+              screenshotPathMap.delete(src);
+              console.log("截图发送成功");
+            }
+          }
+        } catch (error) {
+          console.error("Failed to send screenshot:", error);
+        }
+      } else if (
+        src.startsWith("data:image") ||
+        src.startsWith("data:application/octet-stream")
+      ) {
+        try {
           const response = await fetch(src);
           const blob = await response.blob();
 
-          // 根据图片格式确定文件类型
-          const fileType = src.includes("image/png") ? "image/png" : 
-                          src.includes("image/jpeg") ? "image/jpeg" : 
-                          src.includes("image/webp") ? "image/webp" : "image/png";
+          let fileType = "image/png";
+          if (src.includes("iVBORw0KGgo")) {
+            fileType = "image/png";
+          } else if (src.includes("/9j/")) {
+            fileType = "image/jpeg";
+          }
 
-          const file = new File([blob], `screenshot_${Date.now()}.${fileType.split('/')[1]}`, { type: fileType });
+          const file = new File(
+            [blob],
+            `image_${Date.now()}.${fileType.split("/")[1]}`,
+            {
+              type: fileType,
+            },
+          );
 
-          // 使用getImageMessage创建图片消息
           const imageMessage = await getImageMessage(file);
           await sendMessage({ message: imageMessage });
         } catch (error) {
@@ -109,7 +159,6 @@ const ChatFooter: ForwardRefRenderFunction<unknown, unknown> = (_, ref) => {
       }
     }
 
-    // 清空编辑器
     setHtml("");
   };
 

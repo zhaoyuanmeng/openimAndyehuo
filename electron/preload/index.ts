@@ -67,15 +67,18 @@ const getUniqueSavePath = (originalPath: string) => {
   return savePath;
 };
 
-const getFileByPath = async (filePath: string) => {
-  try {
-    const filename = path.basename(filePath);
-    const data = await fs.promises.readFile(filePath);
-    return new File([data], filename);
-  } catch (error) {
-    console.log(error);
-    return null;
-  }
+const getFileByPath = async (filePath: string) => {  
+  try {  
+    const filename = path.basename(filePath);  
+    const data = await fs.promises.readFile(filePath);  
+    const file = new File([data], filename, { type: 'image/png' });  
+      
+    // 返回一个包含 file 和 path 的对象  
+    return { file, path: filePath };  
+  } catch (error) {  
+    console.log(error);  
+    return null;  
+  }  
 };
 
 const saveFileToDisk = async ({

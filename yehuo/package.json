@@ -1,0 +1,116 @@
+{
+  "name": "wf-pc-chat",
+  "company": "wildfire",
+  "version": "1.1.0",
+  "description": "WF IM PC Client",
+  "appId": "cn.wildfire.chat",
+  "private": true,
+  "homepage": "https://wildfirechat.cn",
+  "maintainers": [
+    "imndx"
+  ],
+  "author": {
+    "email": "imndxx@wildirechat.cn",
+    "name": "imndx"
+  },
+  "scripts": {
+    "package": "node scripts/validate.js && node scripts/del.js ./marswrapper.node && node scripts/copy-proto.js && node scripts/copy-rcaddon.js && vue-cli-service electron:build -p never",
+    "dev": "node scripts/validate.js && node scripts/del.js ./marswrapper.node && node scripts/copy-proto.js && node scripts/copy-rcaddon.js && vue-cli-service electron:serve --disable-background-timer-throttling",
+    "validate": "node scripts/validate.js",
+    "electron:dev": "vue-cli-service electron:serve",
+    "postinstall": "electron-builder install-app-deps",
+    "postuninstall": "electron-builder install-app-deps",
+    "cross-package-win": "node scripts/validate.js && node scripts/del.js ./marswrapper.node && node scripts/copy-proto.js win32 x64 && node scripts/copy-rcaddon.js win32 x64 && vue-cli-service electron:build --win --x64 -p never",
+    "cross-package-mac": "node scripts/validate.js && node scripts/del.js ./marswrapper.node && node scripts/copy-proto.js darwin && node scripts/copy-rcaddon.js darwin && vue-cli-service electron:build --mac -p never",
+    "cross-package-linux": "node scripts/validate.js && node scripts/del.js ./marswrapper.node && node scripts/copy-proto.js linux x64 && vue-cli-service electron:build --linux --x64 -p never",
+    "cross-package-linux-arm64": "node scripts/validate.js && node scripts/del.js ./marswrapper.node && node scripts/copy-proto.js linux arm64 && vue-cli-service electron:build --linux --arm64 -p never",
+    "cross-package-linux-mips64el": "node scripts/validate.js && node scripts/del.js ./marswrapper.node && node scripts/copy-proto.js linux mips64el && vue-cli-service electron:build --linux --arm64 -p never",
+    "cross-package-linux-loongarch64": "node scripts/validate.js && node scripts/del.js ./marswrapper.node && node scripts/copy-proto.js linux loong64 && vue-cli-service electron:build --linux --arm64 -p never",
+    "cross-package-linux-sw64": "node scripts/validate.js && node scripts/del.js ./marswrapper.node && node scripts/copy-proto.js linux sw_64 && vue-cli-service electron:build --linux --arm64 -p never",
+    "cross-package-all": "node scripts/validate.js && node scripts/del.js ./dist_electron && npm run cross-package-mac && npm run cross-package-win && npm run cross-package-win32 && npm run cross-package-linux && npm run cross-package-linux-arm64"
+  },
+  "main": "background.js",
+  "dependencies": {
+    "@imndx/v-emoji-picker-vue3": "^3.0.2",
+    "@imndx/vue-infinite-loading": "^3.0.1-alpha",
+    "@kyvg/vue3-notification": "^3.2.0",
+    "@madogai/vue-context": "^8.2.1",
+    "@nearform/heap-profiler": "^2.0.0",
+    "@vueuse/components": "^10.8.0",
+    "@vueuse/core": "^10.8.0",
+    "anchorme": "3.0.5",
+    "atob": "^2.1.2",
+    "axios": "1.6.7",
+    "base64-arraybuffer": "^0.2.0",
+    "benz-amr-recorder": "^1.1.5",
+    "body-scroll-lock": "^4.0.0-beta.0",
+    "btoa": "^1.2.1",
+    "buffer": "^6.0.3",
+    "core-js": "^3.36.0",
+    "detectrtc": "^1.4.1",
+    "electron-screenshots": "^0.5.27",
+    "electron-tabs": "^1.0.4",
+    "electron-window-state": "^5.0.3",
+    "electron-windows-badge": "^1.1.0",
+    "events": "^3.2.0",
+    "file-system": "^2.2.2",
+    "i18n": "^0.15.1",
+    "install": "^0.13.0",
+    "jr-qrcode": "^1.1.4",
+    "js-base64": "^3.4.5",
+    "long": "^4.0.0",
+    "mitt": "^3.0.1",
+    "npm": "^10.7.0",
+    "pinia": "^2.1.7",
+    "push.js": "^1.0.12",
+    "resize-image": "^0.1.0",
+    "resize-observer-polyfill": "^1.5.1",
+    "tmp": "^0.2.3",
+    "tributejs": "^5.1.3",
+    "twemoji": "^13.1.1",
+    "universal-emoji-parser": "1.0.125",
+    "vue": "^3.5.22",
+    "vue-dropdowns": "^1.1.2",
+    "vue-i18n": "^9.9.1",
+    "vue-router": "^4.5.1",
+    "vue-spinner": "^1.0.4",
+    "vue-tippy": "^6.4.1",
+    "vue3-virtual-scroll-list": "^0.2.1",
+    "ws": "^8.17.0",
+    "xss": "^1.0.14"
+  },
+  "optionalDependencies": {
+    "electron-clipboard-ex": "^1.3.3"
+  },
+  "devDependencies": {
+    "@matthijsburgh/vue-cli-plugin-electron-builder": "^3.0.2",
+    "@vue/cli-plugin-babel": "~5.0.8",
+    "@vue/cli-service": "~5.0.8",
+    "@vue/compiler-sfc": "^3.4.19",
+    "@vue/preload-webpack-plugin": "^2.0.0",
+    "chalk": "^2.4.2",
+    "copy-webpack-plugin": "^5.1.2",
+    "cpy-cli": "^3.1.1",
+    "del-cli": "^3.0.1",
+    "electron": "^38.2.2",
+    "electron-devtools-installer": "^3.1.0",
+    "md5-file": "^5.0.0",
+    "native-ext-loader": "^2.3.0",
+    "sass": "^1.71.1",
+    "sass-loader": "^14.1.1",
+    "shelljs": "^0.8.4"
+  },
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "node": true
+    },
+    "extends": [
+      "plugin:vue/essential"
+    ],
+    "rules": {}
+  },
+  "overrides": {
+    "webpack": "5.91.0"
+  }
+}

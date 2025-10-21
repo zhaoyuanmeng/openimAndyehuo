@@ -1,0 +1,114 @@
+@import "~@madogai/vue-context/dist/css/vue-context.css";
+
+.v-context {
+    font-size: 14px;
+}
+
+.v-context > li > a {
+    padding: 0.4rem 1rem;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-app-region: no-drag;
+}
+
+.tippy-tooltip.light-theme {
+    /* todo */
+    background-color: white;
+    border: 2px solid white;
+    /*width: 350px;*/
+    /*height: 350px;*/
+}
+input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+    accent-color: #b70006; /* 绿色，可替换为任意颜色值 */
+}
+.tippy-arrow {
+    border-right: 8px solid white !important;
+}
+
+.tippy-popper[x-placement^="top"] .tippy-arrow {
+    border-top: 8px solid white !important;
+    border-right: 8px solid transparent !important;
+}
+
+.vue-notification-group {
+    margin: var(--main-margin-top) var(--main-margin-right) 0 0;
+}
+
+img.emoji {
+    height: 1em !important;
+    width: 1em !important;
+    margin: 0 0.05em 0 0.1em;
+    vertical-align: -0.1em;
+    user-select: none;
+}
+
+.single-line {
+    max-width: 100%;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+ul,
+ol {
+    list-style: none;
+}
+
+div,
+button,
+img,
+video {
+    outline: none;
+}
+
+p,
+div {
+    word-break: break-all;
+    user-select: none;
+}
+
+/* 全局滚动条整体：固定宽度，保持占位 */
+::-webkit-scrollbar {
+  width: 6px;  /* 垂直滚动条宽度 */
+  height: 6px; /* 水平滚动条高度 */
+}
+
+/* 全局滚动条轨道：默认透明 */
+::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+/* 全局滚动条滑块：默认透明（视觉隐藏） */
+::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 3px; /* 滑块圆角 */
+  transition: background-color 0.2s ease; /* 颜色过渡动画 */
+}
+
+/* 当滚动容器 hover 时，显示滑块颜色 */
+:hover::-webkit-scrollbar-thumb {
+  background-color: #c0c0c0;
+}
+
+/* 滑块 hover 时加深颜色（可选增强） */
+::-webkit-scrollbar-thumb:hover {
+  background-color: #a0a0a0;
+}
+
+/* Firefox 适配：保持宽高占位，默认隐藏效果 */
+* {
+  scrollbar-width: thin; /* 窄滚动条，保持占位 */
+  scrollbar-color: transparent transparent; /* 默认滑块和轨道都透明 */
+  transition: scrollbar-color 0.2s ease; /* 颜色过渡 */
+}
+
+/* Firefox 容器 hover 时显示颜色 */
+:hover {
+  scrollbar-color: #c0c0c0 transparent; /* 滑块显色，轨道保持透明 */
+}

@@ -1,0 +1,315 @@
+<template>
+    <section @click.stop="" class="user-info-container">
+        <div class="header">
+            <div class="desc">
+                <div style="display: flex; align-items: center">
+                    <h2>{{ userInfo.displayName }}</h2>
+                    <p v-if="isExternalDomainUser" class="single-line" style="color: #F0A040; border-radius: 2px;  padding: 1px 2px; font-size: 9px">{{ domainName }}</p>
+                </div>
+                <!-- <label style="max-width: 200px; text-overflow: ellipsis" class="single-line">{{ $t('common.wfc_id') + ': ' + userInfo.name }}</label> -->
+            </div>
+            <div>
+                <img class="avatar" draggable="false" v-bind:src="userInfo.portrait" @click="pickFile"/>
+                <input v-if="enableUpdatePortrait" ref="fileInput" @change="onPickFile($event)" class="icon-ion-android-attach" type="file"
+                       accept="image/png, image/jpeg"
+                       style="display: none">
+            </div>
+        </div>
+        <div class="content">
+            <ul>
+                <li v-if="isFriend">
+                    <label>{{ $t('common.alias') }}</label>
+                    <div class="alias">
+                        <input @click.stop="" type="text"
+                               v-model.trim="friendAlias"
+                               @keyup.enter="updateFriendAlias"
+                               placeholder="备注名"/>
+                    </div>
+                </li>
+                <li>
+                    <label>{{ $t('common.area') }}</label>
+                    <div>{{ $t('misc.beijing') }}</div>
+                </li>
+                <!-- <li>
+                    <label>手机号</label>
+                    <div>xxxx</div>
+                </li> -->
+            </ul>
+        </div>
+        <div class="action">
+            <!--            <a href="#"><i class="icon-ion-ios-shuffle" @click="share"></i></a>-->
+            <a href="#" @click.prevent><i class="icon-ion-ios-chatboxes-outline" @click.prevent="chat"></i></a>
+            <a v-if="!isSelf" href="#" @click.prevent><i class="icon-ion-ios-telephone-outline" @click.prevent="startAudioCall"></i></a>
+            <a v-if="!isSelf" href="#" @click.prevent><i class="icon-ion-ios-videocam-outline" @click.prevent="startVideoCall"></i></a>
+            <a v-if="!isFriend" href="#" @click.prevent><i class="icon-ion-ios-personadd-outline" @click.prevent="addFriend"></i></a>
+        </div>
+    </section>
+</template>
+
+<script>
+import store from "../../../store";
+import Conversation from "../../../wfc/model/conversation";
+import ConversationType from "../../../wfc/model/conversationType";
+import FriendRequestView from "../../main/contact/FriendRequestView";
+import wfc from "../../../wfc/client/wfc";
+import MessageContentMediaType from "../../../wfc/messages/messageContentMediaType";
+import ModifyMyInfoEntry from "../../../wfc/model/modifyMyInfoEntry";
+import ModifyMyInfoType from "../../../wfc/model/modifyMyInfoType";
+import IpcSub from "../../../ipc/ipcSub";
+import WfcUtil from "../../../wfc/util/wfcUtil";
+
+export default {
+    name: "UserCardView",
+    props: {
+        userInfo: {
+            type: Object,
+            required: true,
+        },
+        enableUpdatePortrait: {
+            type: Boolean,
+            required: false,
+        }
+    },
+    data() {
+        return {
+            friendAlias: this.userInfo.uid === wfc.getUserId() ? this.userInfo.displayName : this.userInfo.friendAlias,
+            sharedMiscState: store.state.misc,
+        }
+    },
+    methods: {
+        share() {
+            // TODO share
+            this.close();
+        },
+        chat() {
+            let conversation = new Conversation(ConversationType.Single, this.userInfo.uid, 0);
+            if (store.isConversationInCurrentWindow(conversation)) {
+                store.setCurrentConversation(conversation)
+            } else {
+                IpcSub.startConversation(conversation);
+            }
+            this.close();
+            // 跳转到会话列表页
+
+            if (this.$router.currentRoute.path !== '/home') {
+                this.$router.replace('/home');
+            }
+        },
+        startAudioCall() {
+            this.close();
+            let conversation = new Conversation(ConversationType.Single, this.userInfo.uid, 0);
+            this.$startVoipCall({audioOnly: true, conversation: conversation});
+        },
+
+        startVideoCall() {
+            this.close();
+            let conversation = new Conversation(ConversationType.Single, this.userInfo.uid, 0);
+            this.$startVoipCall({audioOnly: false, conversation: conversation});
+        },
+        addFriend() {
+            this.close();
+            this.$modal.show(
+                FriendRequestView,
+                {
+                    userInfo: this.userInfo,
+                }, null,
+                {
+                    name: 'friend-request-modal',
+                    width: 600,
+                    height: 250,
+                    clickToClose: false,
+                }, {})
+        },
+        updateFriendAlias() {
+            if (this.userInfo.uid === wfc.getUserId()) {
+                if (this.friendAlias !== this.userInfo.displayName) {
+                    let entry = new ModifyMyInfoEntry();
+                    entry.type = ModifyMyInfoType.Modify_DisplayName;
+                    entry.value = this.friendAlias;
+                    wfc.modifyMyInfo([entry]);
+                }
+            } else {
+                if (this.friendAlias !== this.userInfo.friendAlias) {
+                    wfc.setFriendAlias(this.userInfo.uid, this.friendAlias,
+                        () => {
+                            // do nothing
+                        },
+                        (error) => {
+                            // do nothing
+                        })
+                }
+            }
+            this.close();
+        },
+        close() {
+            this.$emit('close');
+        },
+
+        pickFile() {
+            if (!this.enableUpdatePortrait) {
+                return;
+            }
+            this.$refs['fileInput'].click();
+        },
+        onPickFile(event) {
+            // this.batchProcess(e.target.files[0]);
+            let file = event.target.files[0];
+
+            wfc.uploadMedia(file.name, file, MessageContentMediaType.Portrait, (url) => {
+                let entry = new ModifyMyInfoEntry();
+                entry.type = ModifyMyInfoType.Modify_Portrait;
+                entry.value = url;
+
+                wfc.modifyMyInfo([entry], () => {
+                    //this.userInfo.portrait = url;
+                    // 会触发userInfosUpdate 通知
+                }, (err) => {
+                    console.log('modify my info error', err)
+                })
+            }, (err) => {
+                console.log('err', err)
+            }, (p, t) => {
+                console.log('progress', p, t)
+            })
+        },
+
+    },
+
+    computed: {
+        isFriend() {
+            return wfc.getUserId() === this.userInfo.uid || wfc.isMyFriend(this.userInfo.uid)
+        },
+        isSelf() {
+            return this.userInfo.uid === wfc.getUserId();
+        },
+        isExternalDomainUser() {
+            let user = this.userInfo;
+            return WfcUtil.isExternal(user.uid);
+
+        },
+        domainName() {
+            let user = this.userInfo;
+            if (WfcUtil.isExternal(user.uid)) {
+                let domainId = WfcUtil.getExternalDomainId(user.uid);
+                let domainInfo = wfc.getDomainInfo(domainId);
+                return '@' + domainInfo.name;
+            }
+            return '';
+        },
+    }
+};
+</script>
+
+<style lang="css" scoped>
+.user-info-container {
+    pointer-events: auto !important;
+    width: 300px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #292a2c;
+    background-color: #fcfcfc;
+}
+
+.user-info-container .avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 3px;
+}
+
+.header {
+    width: calc(100% - 40px);
+    margin: 10px 20px;
+    padding-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid lightgray;
+}
+
+
+.header .desc {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.content {
+    width: 100%;
+    text-align: left;
+}
+
+.content ul {
+    border: 1px solid white;
+    list-style: none;
+    margin: 10px 20px;
+}
+
+.content ul li {
+    margin-left: 0;
+    height: 40px;
+    line-height: 40px;
+    display: flex;
+}
+
+.content ul li label {
+    margin-right: 40px;
+    width: 60px;
+}
+
+.content ul li .alias {
+    border: none;
+    background: none;
+}
+
+.content ul li .alias > input {
+    width: 100%;
+    outline: none;
+    border: none;
+    background-color: #fcfcfc;
+    padding: 2px 5px;
+}
+
+.content ul li .alias > input:focus {
+    border: 1px solid #4168e0;
+}
+
+.content ul li .alias > input:active {
+    border: 1px solid #4168e0;
+}
+
+.content ul li > div {
+    display: inline-block;
+    /* flex: 1; */
+}
+
+.action {
+    width: calc(100% - 40px);
+    display: flex;
+    justify-content: flex-end;
+
+    padding-top: 20px;
+    padding-bottom: 10px;
+}
+
+.action a {
+    display: inline-block;
+    text-decoration: none;
+}
+
+.action a i {
+    font-size: 24px;
+    padding: 5px 30px;
+}
+
+.action a i:last-of-type {
+    padding-right: 0;
+}
+
+i:hover {
+    color: #B70006;
+}
+
+
+</style>

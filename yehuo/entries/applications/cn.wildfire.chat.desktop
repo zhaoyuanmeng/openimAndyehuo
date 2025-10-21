@@ -1,0 +1,16 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=wf-pc-chat
+Name[zh_CN]=数城e家人
+Comment=Wildfire Chat PC Client
+Comment[zh_CN]=数城e家人 PC客户端
+Exec=/opt/数城e家人/数城e家人 %U
+GenericName=wf-pc-chat
+GenericName[zh_CN]=数城e家人
+MimeType=application/wf-pc-chat;
+Icon=/opt/数城e家人/resources/extraResources/icons/128x128.png
+Keywords=various;keywords;describing;your;application;
+StartupNotify=true
+Terminal=false
+Type=Application
+Categories=Chat;

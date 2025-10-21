@@ -361,6 +361,8 @@
     "callTime": "通话时长",
     "handleByOtherDevice": "已在其他设备处理",
     "screenshotHideWindow": "隐藏当前窗口截图",
+    "screenshotHide": "隐藏窗口截图",
+    "screenshotNoHide": "不隐藏窗口截图",
     "historyList": "历史记录",
     "memberList": "群成员列表",
     "meetingInvitation": "通话邀请",

@@ -2,12 +2,62 @@
   margin: 2px;
   img {
     aspect-ratio: auto !important;
-    max-width: 30vw !important;
-    max-height: 15vh !important;
+    max-width: 200px !important;
+    max-height: 200px !important;
     width: auto !important;
     object-fit: contain;
     cursor: pointer;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   }
+}
+
+// 微信风格的图片样式
+.ck-content {
+  .image {
+    display: inline-block;
+    margin: 4px 2px;
+    
+    img {
+      max-width: 200px !important;
+      max-height: 200px !important;
+      width: auto !important;
+      height: auto !important;
+      border-radius: 4px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      cursor: pointer;
+      transition: transform 0.2s ease;
+      user-select: none;
+      pointer-events: auto;
+      
+      &:hover {
+        transform: scale(1.02);
+      }
+    }
+  }
+}
+
+// 禁用图片拖拽和调整大小
+.ck-content img {
+  resize: none !important;
+  user-select: none !important;
+  -webkit-user-drag: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+}
+
+// 隐藏图片工具栏和调整手柄
+.ck-widget__type-around__button,
+.ck-widget__type-around__button_after,
+.ck-image-resize__handle,
+.ck-widget__resizer {
+  display: none !important;
+}
+
+// 禁用图片选择框
+.ck-widget.ck-widget_selected {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .ck-content {

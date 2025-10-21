@@ -1,6 +1,5 @@
 import { useLatest } from "ahooks";
 import { Button } from "antd";
-import { Modal } from "antd";
 import { t } from "i18next";
 import { forwardRef, ForwardRefRenderFunction, memo, useState } from "react";
 import { useEffect } from "react";
@@ -27,8 +26,6 @@ i18n.on("languageChanged", () => {
 const ChatFooter: ForwardRefRenderFunction<unknown, unknown> = (_, ref) => {
   const [html, setHtml] = useState("");
   const latestHtml = useLatest(html);
-  const [screenshotPreviewUrl, setScreenshotPreviewUrl] = useState<string>("");
-  const [screenshotFilePath, setScreenshotFilePath] = useState<string>("");
 
   const { getImageMessage } = useFileMessage();
   const { sendMessage } = useSendMessage();
@@ -42,8 +39,19 @@ const ChatFooter: ForwardRefRenderFunction<unknown, unknown> = (_, ref) => {
 
           const base64Data = await fileToBase64(file);
 
-          setScreenshotFilePath(filePath);
-          setScreenshotPreviewUrl(base64Data);
+          // 确保base64数据正确，添加必要的前缀
+          const imgSrc = base64Data.startsWith('data:') ? base64Data : `data:image/png;base64,${base64Data}`;
+
+          // 直接将截图插入到CKEditor中
+          const imgTag = `<img src="${imgSrc}" alt="screenshot" style="max-width: 200px; max-height: 200px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);" />`;
+
+          // 如果当前有内容，在末尾添加换行和图片
+          const currentContent = latestHtml.current;
+          const newContent = currentContent
+            ? `${currentContent}<br/>${imgTag}`
+            : imgTag;
+
+          setHtml(newContent);
         }
       } catch (error) {
         console.error("Screenshot preview failed:", error);
@@ -51,59 +59,58 @@ const ChatFooter: ForwardRefRenderFunction<unknown, unknown> = (_, ref) => {
     };
 
     return () => {
-      window.screenshotPreview = undefined;
+      window.screenshotPreview = () => {};
     };
-  }, []);
-
-  const handleSendScreenshot = async () => {
-    if (!screenshotFilePath || !screenshotPreviewUrl) return;
-
-    try {
-      // 直接使用文件路径创建消息
-      const imageMessage = (
-        await IMSDK.createImageMessageFromFullPath(screenshotFilePath)
-      ).data;
-
-      // 从 base64 获取图片尺寸
-      const img = new Image();
-      await new Promise((resolve, reject) => {
-        img.onload = resolve;
-        img.onerror = reject;
-        img.src = screenshotPreviewUrl;
-      });
-
-      // 设置预览 URL 和尺寸
-      if (imageMessage.pictureElem?.sourcePicture) {
-        imageMessage.pictureElem.sourcePicture.url = screenshotPreviewUrl;
-        imageMessage.pictureElem.sourcePicture.width = img.width;
-        imageMessage.pictureElem.sourcePicture.height = img.height;
-      }
-
-      await sendMessage({ message: imageMessage });
-
-      setScreenshotPreviewUrl("");
-      setScreenshotFilePath("");
-    } catch (error) {
-      console.error("Screenshot send failed:", error);
-    }
-  };
-
-  const handleCancelScreenshot = () => {
-    setScreenshotPreviewUrl("");
-    setScreenshotFilePath("");
-  };
+  }, [latestHtml]);
 
   const onChange = (value: string) => {
     setHtml(value);
   };
 
   const enterToSend = async () => {
-    const cleanText = getCleanText(latestHtml.current);
-    const message = (await IMSDK.createTextMessage(cleanText)).data;
-    setHtml("");
-    if (!cleanText) return;
+    const htmlContent = latestHtml.current;
+    if (!htmlContent) return;
 
-    sendMessage({ message });
+    // 解析HTML内容，分离文本和图片
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = htmlContent;
+
+    const textContent = tempDiv.textContent?.trim() || "";
+    const images = Array.from(tempDiv.querySelectorAll("img"));
+
+    // 发送文本消息
+    if (textContent && textContent.trim()) {
+      const textMessage = (await IMSDK.createTextMessage(textContent)).data;
+      await sendMessage({ message: textMessage });
+    }
+
+    // 发送图片消息
+    for (const img of images) {
+      const src = img.getAttribute("src");
+      if (src && src.startsWith("data:image")) {
+        try {
+          // 将base64转换为File对象
+          const response = await fetch(src);
+          const blob = await response.blob();
+
+          // 根据图片格式确定文件类型
+          const fileType = src.includes("image/png") ? "image/png" : 
+                          src.includes("image/jpeg") ? "image/jpeg" : 
+                          src.includes("image/webp") ? "image/webp" : "image/png";
+
+          const file = new File([blob], `screenshot_${Date.now()}.${fileType.split('/')[1]}`, { type: fileType });
+
+          // 使用getImageMessage创建图片消息
+          const imageMessage = await getImageMessage(file);
+          await sendMessage({ message: imageMessage });
+        } catch (error) {
+          console.error("Failed to send image:", error);
+        }
+      }
+    }
+
+    // 清空编辑器
+    setHtml("");
   };
 
   return (
@@ -121,24 +128,6 @@ const ChatFooter: ForwardRefRenderFunction<unknown, unknown> = (_, ref) => {
           </div>
         </div>
       </footer>
-
-      <Modal
-        open={Boolean(screenshotPreviewUrl)}
-        onCancel={handleCancelScreenshot}
-        onOk={handleSendScreenshot}
-        title={t("placeholder.screenshot")}
-        okText={t("placeholder.send")}
-        cancelText={t("close")}
-        width={800}
-      >
-        <div className="flex items-center justify-center p-4">
-          <img
-            src={screenshotPreviewUrl}
-            alt="screenshot preview"
-            style={{ maxWidth: "100%", maxHeight: "60vh" }}
-          />
-        </div>
-      </Modal>
     </>
   );
 };

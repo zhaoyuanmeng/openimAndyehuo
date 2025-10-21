@@ -79,9 +79,9 @@ export const MainContentWrap = () => {
       // 监听截图完成事件
       const unsubscribe = window.electronAPI.subscribe(
         "screenshot-complete",
-        (base64Data: string) => {
+        (filePath: string) => {
           if (window.screenshotPreview) {
-            window.screenshotPreview(base64Data);
+            window.screenshotPreview(filePath);
           }
         },
       );

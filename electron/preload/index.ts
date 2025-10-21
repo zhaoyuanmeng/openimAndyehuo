@@ -112,7 +112,7 @@ const Api: IElectronAPI = {
   ipcSendSync,
   getFileByPath,
   saveFileToDisk,
-  startScreenshot: () => ipcInvoke('start-screenshot'), // 新增
+  startScreenshot: (hideWindow?: boolean) => ipcInvoke('start-screenshot', hideWindow), // 新增
 };
 
 contextBridge.exposeInMainWorld("electronAPI", Api);

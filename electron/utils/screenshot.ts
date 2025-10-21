@@ -36,14 +36,19 @@ export const initScreenshots = (mainWindow: BrowserWindow) => {
   });
 
   // 注册IPC处理
-  ipcMain.handle("start-screenshot", async () => {
+  ipcMain.handle("start-screenshot", async (_, hideWindow = true) => {
     if (screenshots) {
-      // 隐藏主窗口
-      mainWindow.hide();
-      // 延迟启动截图,确保窗口已隐藏
-      setTimeout(() => {
+      if (hideWindow) {
+        // 隐藏主窗口
+        mainWindow.hide();
+        // 增加延迟启动截图,确保窗口完全隐藏，避免透明度问题
+        setTimeout(() => {
+          screenshots?.startCapture();
+        }, 500);
+      } else {
+        // 不隐藏窗口直接截图
         screenshots?.startCapture();
-      }, 100);
+      }
     }
   });
 };

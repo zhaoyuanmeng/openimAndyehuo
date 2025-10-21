@@ -33,7 +33,7 @@ const sendActionList = [
   },
   {
     title: t("placeholder.screenshot"),
-    icon: image, // 需要添加截图图标
+    icon: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEwIDJDNi42ODYyOSAyIDQgNC42ODYyOSA0IDhWMTJDNCAxNS4zMTM3IDYuNjg2MjkgMTggMTAgMThDMTMuMzEzNyAxOCAxNiAxNS4zMTM3IDE2IDEyVjhDMTYgNC42ODYyOSAxMy4zMTM3IDIgMTAgMloiIHN0cm9rZT0iIzMzMzMzMyIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgo8cGF0aCBkPSJNOCA4SDZWNkg4VjhaIiBmaWxsPSIjMzMzMzMzIi8+CjxwYXRoIGQ9Ik0xNCA4SDEyVjZIMTRWOFoiIGZpbGw9IiMzMzMzMzMiLz4KPHBhdGggZD0iTTEwIDEwVjE0IiBzdHJva2U9IiMzMzMzMzMiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPC9zdmc+", // 截图图标
     key: "screenshot",
     accept: undefined,
     comp: null,
@@ -71,7 +71,14 @@ const SendActionBar = ({
   // 新增截图处理函数
   const handleScreenshot = () => {
     if (window.electronAPI) {
-      window.electronAPI.startScreenshot();
+      window.electronAPI.startScreenshot(true); // 默认隐藏窗口
+    }
+  };
+
+  // 新增不隐藏窗口的截图处理函数
+  const handleScreenshotNoHide = () => {
+    if (window.electronAPI) {
+      window.electronAPI.startScreenshot(false); // 不隐藏窗口
     }
   };
 
@@ -89,10 +96,37 @@ const SendActionBar = ({
           return (
             <div
               key={action.key}
-              className="mr-5 flex cursor-pointer items-center"
-              onClick={handleScreenshot}
+              className="group relative mr-5 flex cursor-pointer items-center"
             >
               <img src={action.icon} width={20} alt={action.title} />
+
+              {/* 截图模式选择下拉菜单 */}
+              <div className="invisible absolute left-0 top-full z-50 mt-1 rounded-lg border border-gray-200 bg-white opacity-0 shadow-xl transition-all duration-200 group-hover:visible group-hover:opacity-100">
+                <div className="py-1 min-w-[140px]">
+                  <div
+                    className="cursor-pointer px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 flex items-center"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleScreenshot();
+                    }}
+                  >
+                    <span className="mr-2">📷</span>
+                    <span>{t("placeholder.screenshotHide")}</span>
+                  </div>
+                  <div
+                    className="cursor-pointer px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 flex items-center border-t border-gray-100"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleScreenshotNoHide();
+                    }}
+                  >
+                    <span className="mr-2">🖼️</span>
+                    <span>{t("placeholder.screenshotNoHide")}</span>
+                  </div>
+                </div>
+              </div>
             </div>
           );
         }

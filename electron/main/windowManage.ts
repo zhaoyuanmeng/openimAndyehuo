@@ -5,6 +5,7 @@ import { destroyTray } from "./trayManage";
 import { getIsForceQuit } from "./appManage";
 import { registerShortcuts, unregisterShortcuts } from "./shortcutManage";
 import { initIMSDK } from "../utils/imsdk";
+import { initScreenshots } from '../utils/screenshot';  
 import OpenIMSDKMain from "@openim/electron-client-sdk";
 
 const url = process.env.VITE_DEV_SERVER_URL;
@@ -92,6 +93,8 @@ export function createMainWindow() {
       mainWindow?.hide();
     }
   });
+  // 初始化截图功能  
+  initScreenshots(mainWindow);  
   return mainWindow;
 }
 

@@ -28,8 +28,6 @@
     "build:mac-arm": "vite build  &&  electron-builder --macos --arm64"
   },
   "devDependencies": {
-    "@commitlint/cli": "^17.4.4",
-    "@commitlint/config-conventional": "^17.4.4",
     "@playwright/test": "^1.31.0",
     "@types/md5": "^2.3.2",
     "@types/react": "^18.0.28",

@@ -74,5 +74,23 @@ export const MainContentWrap = () => {
     initSettingStore();
   }, []);
 
+  useEffect(() => {
+    if (window.electronAPI) {
+      // 监听截图完成事件
+      const unsubscribe = window.electronAPI.subscribe(
+        "screenshot-complete",
+        (base64Data: string) => {
+          if (window.screenshotPreview) {
+            window.screenshotPreview(base64Data);
+          }
+        },
+      );
+
+      return () => {
+        unsubscribe();
+      };
+    }
+  }, []);
+
   return <Outlet />;
 };

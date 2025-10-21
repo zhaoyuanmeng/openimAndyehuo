@@ -5,7 +5,6 @@ import { contextBridge, ipcRenderer } from "electron";
 import { isProd } from "../utils";
 import "@openim/electron-client-sdk/lib/preload";
 import { Platform } from "@openim/wasm-client-sdk";
-
 const getPlatform = () => {
   if (process.platform === "darwin") {
     return Platform.MacOSX;
@@ -113,6 +112,7 @@ const Api: IElectronAPI = {
   ipcSendSync,
   getFileByPath,
   saveFileToDisk,
+  startScreenshot: () => ipcInvoke('start-screenshot'), // 新增
 };
 
 contextBridge.exposeInMainWorld("electronAPI", Api);

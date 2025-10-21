@@ -3,7 +3,7 @@ import { Button } from "antd";
 import { t } from "i18next";
 import { forwardRef, ForwardRefRenderFunction, memo, useState } from "react";
 import { useEffect } from "react";
-
+import { useGeneralFileMessage } from "./SendActionBar/useGeneralFileMessage"; 
 import CKEditor from "@/components/CKEditor";
 import { getCleanText } from "@/components/CKEditor/utils";
 import i18n from "@/i18n";
@@ -32,6 +32,7 @@ const ChatFooter: ForwardRefRenderFunction<unknown, unknown> = (_, ref) => {
   const latestHtml = useLatest(html);
 
   const { getImageMessage } = useFileMessage();
+  const { getFileMessage } = useGeneralFileMessage(); 
   const { sendMessage } = useSendMessage();
 
   useEffect(() => {
@@ -166,7 +167,7 @@ const ChatFooter: ForwardRefRenderFunction<unknown, unknown> = (_, ref) => {
     <>
       <footer className="relative h-full bg-white py-px">
         <div className="flex h-full flex-col border-t border-t-[var(--gap-text)]">
-          <SendActionBar sendMessage={sendMessage} getImageMessage={getImageMessage} />
+          <SendActionBar sendMessage={sendMessage} getImageMessage={getImageMessage}  getFileMessage={getFileMessage}/>
           <div className="relative flex flex-1 flex-col overflow-hidden">
             <CKEditor value={html} onEnter={enterToSend} onChange={onChange} />
             <div className="flex items-center justify-end py-2 pr-3">

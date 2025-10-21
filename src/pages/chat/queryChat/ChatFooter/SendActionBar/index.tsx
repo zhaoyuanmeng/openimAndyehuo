@@ -10,7 +10,7 @@ import React from "react";
 import image from "@/assets/images/chatFooter/image.png";
 import rtc from "@/assets/images/chatFooter/rtc.png";
 import { useConversationStore } from "@/store";
-
+import { useGeneralFileMessage } from "./useGeneralFileMessage";
 import { SendMessageParams } from "../useSendMessage";
 import CallPopContent from "./CallPopContent";
 
@@ -39,6 +39,15 @@ const sendActionList = [
     comp: null,
     placement: undefined,
   },
+  // 新增:文件上传按钮
+  {
+    title: "发送文件",
+    icon: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTYgMTBIMTRNMTAgNlYxNE0zIDEwQzMgMTMuODY2IDYuMTM0IDE3IDEwIDE3QzEzLjg2NiAxNyAxNyAxMy44NjYgMTcgMTBDMTcgNi4xMzQgMTMuODY2IDMgMTAgM0M2LjEzNCAzIDMgNi4xMzQgMyAxMFoiIHN0cm9rZT0iIzMzMzMzMyIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgo8L3N2Zz4=",
+    key: "file",
+    accept: "*/*",
+    comp: null,
+    placement: undefined,
+  },
 ];
 
 i18n.on("languageChanged", () => {
@@ -50,9 +59,11 @@ i18n.on("languageChanged", () => {
 const SendActionBar = ({
   sendMessage,
   getImageMessage,
+  getFileMessage,
 }: {
   sendMessage: (params: SendMessageParams) => Promise<void>;
   getImageMessage: (file: File) => Promise<MessageItem>;
+  getFileMessage: (file: File) => Promise<MessageItem>;
 }) => {
   const [visibleState, setVisibleState] = useState(false);
   const isGroupSession = useConversationStore((state) =>
@@ -60,9 +71,17 @@ const SendActionBar = ({
   );
 
   const closePop = () => setVisibleState(false);
-
+  // 新增:文件消息处理
   const fileHandle = async (options: UploadRequestOption) => {
     const message = await getImageMessage(options.file as File);
+    sendMessage({
+      message,
+    });
+  };
+
+  // 新增:普通文件上传处理
+  const generalFileHandle = async (options: UploadRequestOption) => {
+    const message = await getFileMessage(options.file as File);
     sendMessage({
       message,
     });
@@ -102,9 +121,9 @@ const SendActionBar = ({
 
               {/* 截图模式选择下拉菜单 */}
               <div className="invisible absolute left-0 top-full z-50 mt-1 rounded-lg border border-gray-200 bg-white opacity-0 shadow-xl transition-all duration-200 group-hover:visible group-hover:opacity-100">
-                <div className="py-1 min-w-[140px]">
+                <div className="min-w-[140px] py-1">
                   <div
-                    className="cursor-pointer px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 flex items-center"
+                    className="flex cursor-pointer items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -115,7 +134,7 @@ const SendActionBar = ({
                     <span>{t("placeholder.screenshotHide")}</span>
                   </div>
                   <div
-                    className="cursor-pointer px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 flex items-center border-t border-gray-100"
+                    className="flex cursor-pointer items-center border-t border-gray-100 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -151,7 +170,7 @@ const SendActionBar = ({
             popProps={popProps}
             key={action.key}
             accept={action.accept}
-            fileHandle={fileHandle}
+            fileHandle={action.key === "file" ? generalFileHandle : fileHandle}
           >
             <div
               className={clsx("flex cursor-pointer items-center last:mr-0", {

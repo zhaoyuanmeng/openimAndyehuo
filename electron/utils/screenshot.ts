@@ -1,4 +1,4 @@
-import { BrowserWindow, ipcMain } from "electron";
+import { BrowserWindow, ipcMain,nativeImage  } from "electron";
 import Screenshots from "electron-screenshots";
 import { app } from "electron";
 import { writeFileSync } from "fs";
@@ -11,24 +11,24 @@ export const initScreenshots = (mainWindow: BrowserWindow) => {
   });
 
   // 监听截图完成事件
-  screenshots.on("ok", (e, buffer, bounds) => {
-    try {
-      // 在临时目录保存截图
-      const tempDir = app.getPath("temp");
-      const fileName = `screenshot_${Date.now()}.png`;
-      const filePath = join(tempDir, fileName);
-
-      // 保存文件
-      writeFileSync(filePath, buffer);
-
-      // 只发送文件路径
-      mainWindow.webContents.send("screenshot-complete", filePath);
-      mainWindow.show();
-    } catch (error) {
-      console.error("Save screenshot failed:", error);
-      mainWindow.show();
-    }
-  });
+  screenshots.on("ok", (e, buffer, bounds) => {  
+    try {  
+      const tempDir = app.getPath("temp");  
+      const fileName = `screenshot_${Date.now()}.png`;  
+      const filePath = join(tempDir, fileName);  
+  
+      // 使用 nativeImage 保存高质量 PNG  
+      const image = nativeImage.createFromBuffer(buffer);  
+      const pngBuffer = image.toPNG();  
+      writeFileSync(filePath, pngBuffer);  
+  
+      mainWindow.webContents.send("screenshot-complete", filePath);  
+      mainWindow.show();  
+    } catch (error) {  
+      console.error("Save screenshot failed:", error);  
+      mainWindow.show();  
+    }  
+  });  
 
   screenshots.on("cancel", () => {
     // 取消截图,显示主窗口

@@ -10,7 +10,6 @@ import React from "react";
 import image from "@/assets/images/chatFooter/image.png";
 import rtc from "@/assets/images/chatFooter/rtc.png";
 import { useConversationStore } from "@/store";
-import { useGeneralFileMessage } from "./useGeneralFileMessage";
 import { SendMessageParams } from "../useSendMessage";
 import CallPopContent from "./CallPopContent";
 

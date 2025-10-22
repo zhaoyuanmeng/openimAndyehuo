@@ -38,6 +38,7 @@ export function useSendMessage() {
 
       try {
         const { data: successMessage } = await IMSDK.sendMessage(options);
+        console.log("successMessage", successMessage);
         updateOneMessage(successMessage);
       } catch (error) {
         updateOneMessage({

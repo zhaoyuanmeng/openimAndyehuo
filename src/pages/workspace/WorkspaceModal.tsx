@@ -73,7 +73,7 @@ const WorkspaceModal: ForwardRefRenderFunction<
   if (!isOverlayOpen) return null;
 
   return (
-    <div className="workspace-modal-overlay" style={{ left: `${leftOffset}px` }}>
+    <div className="workspace-modal-overlay" style={{ left: `60px` }}>
       <div className="workspace-toolbar">
         <div className="toolbar-left">
           <button

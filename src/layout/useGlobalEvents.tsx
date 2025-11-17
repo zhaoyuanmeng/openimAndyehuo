@@ -133,7 +133,8 @@ export function useGlobalEvent() {
           dataDir: window.electronAPI.getDataPath("sdkResources") || "./",
           logFilePath: window.electronAPI.getDataPath("logsPath") || "./",
           logLevel: LogLevel.Debug,
-          isLogStandardOutput: false,
+          isLogStandardOutput: true,
+          // isLogStandardOutput: false,
           systemType: "electron",
         });
         await IMSDK.login({

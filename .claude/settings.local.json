@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tree d:code2025openim-electron-demo-mainsrc -L 3 -I node_modules)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

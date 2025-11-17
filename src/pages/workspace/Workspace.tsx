@@ -31,6 +31,9 @@ export const Workspace = () => {
       iframeRef.current.src = iframeRef.current.src;
     }
   };
+  const handleOpenModal = () => {
+    window.openWorkspace("http://www.chinaxiongan.cn/");
+  };
 
   const handleClose = () => {
     // 返回到主页或关闭当前标签
@@ -40,6 +43,9 @@ export const Workspace = () => {
   return (
     <div className="workspace-container">
       <div className="workspace-toolbar">
+        <button onClick={handleOpenModal} className="toolbar-btn">
+          打开弹窗
+        </button>
         <button onClick={handleGoBack} disabled={!canGoBack} className="toolbar-btn">
           ← 后退
         </button>

@@ -43,6 +43,13 @@ const router = createHashRouter([
             },
             children: contactRoutes,
           },
+          {
+            path: "WorkspacePage",
+            async lazy() {
+              const { WorkspacePage } = await import("@/pages/workspace/index");
+              return { Component: WorkspacePage };
+            },
+          },
         ],
       },
       {

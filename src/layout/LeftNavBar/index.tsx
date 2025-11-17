@@ -39,11 +39,18 @@ const NavList = [
     title: t("placeholder.contact"),
     path: "/contact",
   },
+  {
+    icon: contact_icon,
+    icon_active: contact_icon_active,
+    title: "工作台",
+    path: "/WorkspacePage",
+  },
 ];
 
 i18n.on("languageChanged", () => {
   NavList[0].title = t("placeholder.chat");
   NavList[1].title = t("placeholder.contact");
+  NavList[2].title = "工作台";
 });
 
 const resizeFile = (file: File): Promise<File> =>

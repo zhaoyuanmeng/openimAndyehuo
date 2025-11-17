@@ -23,44 +23,64 @@ const WorkspaceModal: ForwardRefRenderFunction<
 > = ({ url }, ref) => {
   const { isOverlayOpen, closeOverlay } = useOverlayVisible(ref);
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const [currentUrl, setCurrentUrl] = useState(url || "");
+  const [currentUrl, setCurrentUrl] = useState("");
   const [canGoBack, setCanGoBack] = useState(false);
   const [canGoForward, setCanGoForward] = useState(false);
   const [leftOffset, setLeftOffset] = useState(0);
+
+  // URL 历史栈
+  const [urlHistory, setUrlHistory] = useState<string[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(-1);
+
+  // 初始化 URL 历史
   useEffect(() => {
-    console.log(url, "urlssssss-----");
-    if (url) {
-      console.log(url, "url-----");
+    if (url && url !== urlHistory[currentIndex]) {
+      const newHistory = urlHistory.slice(0, currentIndex + 1);
+      newHistory.push(url);
+      setUrlHistory(newHistory);
+      const newIndex = newHistory.length - 1;
+      setCurrentIndex(newIndex);
       setCurrentUrl(url);
+      // 更新前进/后退按钮状态
+      setCanGoBack(newIndex > 0);
+      setCanGoForward(false);
     }
-  }, [url]);
-  // 添加这个 useEffect
+  }, [url, isOverlayOpen]);
+
+  // 动态计算 LeftNavBar 的宽度
   useEffect(() => {
-    if (isOverlayOpen && url) {
-      console.log("Overlay opened, setting URL:", url);
-      setCurrentUrl(url);
-    }
-  }, [isOverlayOpen, url]);
-  useEffect(() => {
-    // 动态计算 LeftNavBar 的宽度
     if (isOverlayOpen) {
-      const leftNavBar = document.querySelector(".left-nav-bar"); // 根据实际类名调整
+      const leftNavBar = document.querySelector(".left-nav-bar");
       if (leftNavBar) {
         setLeftOffset(leftNavBar.getBoundingClientRect().width);
       }
     }
   }, [isOverlayOpen]);
 
+  // 监听 IPC 事件,处理 iframe 内部打开的新链接
   useEffect(() => {
     const handleWorkspaceOpenUrl = (data: { url: string }) => {
       console.log("workspace-open-url", data);
-      setCurrentUrl(data.url);
-      setCanGoBack(true);
-      console.log("isOverlayOpen", isOverlayOpen, iframeRef.current);
-      // 只在弹窗打开且 iframe 存在时才强制更新
-      if (isOverlayOpen && iframeRef.current) {
-        iframeRef.current.src = data.url;
-      }
+
+      // 使用函数式更新避免闭包问题
+      setUrlHistory((prevHistory) => {
+        setCurrentIndex((prevIndex) => {
+          const newHistory = prevHistory.slice(0, prevIndex + 1);
+          newHistory.push(data.url);
+          const newIndex = newHistory.length - 1;
+
+          setCurrentUrl(data.url);
+          setCanGoBack(newIndex > 0);
+          setCanGoForward(false);
+
+          if (iframeRef.current) {
+            iframeRef.current.src = data.url;
+          }
+
+          return newIndex;
+        });
+        return [...prevHistory.slice(0, currentIndex + 1), data.url];
+      });
     };
 
     if (window.electronAPI?.subscribe) {
@@ -70,31 +90,52 @@ const WorkspaceModal: ForwardRefRenderFunction<
       );
       return unsubscribe;
     }
-  }, [isOverlayOpen]); // 添加 isOverlayOpen 作为依赖
+  }, []); // 移除依赖项,使用函数式更新
+
   const handleGoBack = () => {
-    if (iframeRef.current?.contentWindow) {
-      iframeRef.current.contentWindow.history.back();
-      setCanGoBack(false);
+    console.log("go back", urlHistory, currentIndex);
+    if (currentIndex > 0) {
+      const newIndex = currentIndex - 1;
+      const newUrl = urlHistory[newIndex];
+
+      setCurrentIndex(newIndex);
+      setCurrentUrl(newUrl);
+      setCanGoBack(newIndex > 0);
       setCanGoForward(true);
+
+      if (iframeRef.current) {
+        iframeRef.current.src = newUrl;
+      }
     }
   };
 
   const handleGoForward = () => {
-    if (iframeRef.current?.contentWindow) {
-      iframeRef.current.contentWindow.history.forward();
-      setCanGoForward(false);
+    if (currentIndex < urlHistory.length - 1) {
+      const newIndex = currentIndex + 1;
+      const newUrl = urlHistory[newIndex];
+
+      setCurrentIndex(newIndex);
+      setCurrentUrl(newUrl);
+      setCanGoForward(newIndex < urlHistory.length - 1);
       setCanGoBack(true);
+
+      if (iframeRef.current) {
+        iframeRef.current.src = newUrl;
+      }
     }
   };
 
   const handleRefresh = () => {
-    if (iframeRef.current) {
-      iframeRef.current.src = iframeRef.current.src;
+    if (iframeRef.current && currentUrl) {
+      iframeRef.current.src = currentUrl;
     }
   };
 
   const handleClose = () => {
     closeOverlay();
+    // 清空历史记录
+    setUrlHistory([]);
+    setCurrentIndex(-1);
     setCurrentUrl("");
     setCanGoBack(false);
     setCanGoForward(false);

@@ -28,10 +28,19 @@ const WorkspaceModal: ForwardRefRenderFunction<
   const [canGoForward, setCanGoForward] = useState(false);
   const [leftOffset, setLeftOffset] = useState(0);
   useEffect(() => {
+    console.log(url, "urlssssss-----");
     if (url) {
+      console.log(url, "url-----");
       setCurrentUrl(url);
     }
   }, [url]);
+  // 添加这个 useEffect
+  useEffect(() => {
+    if (isOverlayOpen && url) {
+      console.log("Overlay opened, setting URL:", url);
+      setCurrentUrl(url);
+    }
+  }, [isOverlayOpen, url]);
   useEffect(() => {
     // 动态计算 LeftNavBar 的宽度
     if (isOverlayOpen) {

@@ -24,8 +24,12 @@ export const MainContentLayout = () => {
   // 暴露打开工作台的方法给全局使用
   useEffect(() => {
     window.openWorkspace = (url: string) => {
+      console.log(url, "url--------");
       setWorkspaceUrl(url);
-      workspaceModalRef.current?.openOverlay();
+      setTimeout(() => {
+        console.log("open workspace", workspaceModalRef.current);
+        workspaceModalRef.current?.openOverlay();
+      }, 200);
     };
   }, []);
   useMount(() => {
@@ -45,7 +49,7 @@ export const MainContentLayout = () => {
     <Spin className="!max-h-none" spinning={showLockLoading} tip={loadingTip}>
       <Layout className="h-full">
         <TopSearchBar />
-        <Layout className="relative" >
+        <Layout className="relative">
           <LeftNavBar />
           <Outlet />
           <WorkspaceModal ref={workspaceModalRef} url={workspaceUrl} />

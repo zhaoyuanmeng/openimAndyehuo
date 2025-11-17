@@ -32,7 +32,8 @@ export const Workspace = () => {
     }
   };
   const handleOpenModal = () => {
-    window.openWorkspace("http://www.chinaxiongan.cn/");
+    // window.openWorkspace("http://www.chinaxiongan.cn/");
+    window.openWorkspace("https://www.lanxhan.com/");
   };
 
   const handleClose = () => {

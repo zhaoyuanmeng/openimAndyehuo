@@ -5,7 +5,7 @@ import { destroyTray } from "./trayManage";
 import { getIsForceQuit } from "./appManage";
 import { registerShortcuts, unregisterShortcuts } from "./shortcutManage";
 import { initIMSDK } from "../utils/imsdk";
-import { initScreenshots } from '../utils/screenshot';  
+import { initScreenshots } from "../utils/screenshot";
 import OpenIMSDKMain from "@openim/electron-client-sdk";
 
 const url = process.env.VITE_DEV_SERVER_URL;
@@ -67,8 +67,17 @@ export function createMainWindow() {
   });
 
   // // Make all links open with the browser, not with the application
-  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    if (url.startsWith("https:") || url.startsWith("http:")) shell.openExternal(url);
+  mainWindow.webContents.setWindowOpenHandler(({ url, disposition }) => {
+    console.log("windowOpenHandler:", { url, disposition });
+    if (disposition === "foreground-tab" || disposition === "new-window") {
+      mainWindow?.webContents.send("workspace-open-url", { url });
+      return { action: "deny" };
+    }
+
+    // 其他链接在外部浏览器打开
+    if (url.startsWith("https:") || url.startsWith("http:")) {
+      shell.openExternal(url);
+    }
     return { action: "deny" };
   });
 
@@ -93,8 +102,8 @@ export function createMainWindow() {
       mainWindow?.hide();
     }
   });
-  // 初始化截图功能  
-  initScreenshots(mainWindow);  
+  // 初始化截图功能
+  initScreenshots(mainWindow);
   return mainWindow;
 }
 

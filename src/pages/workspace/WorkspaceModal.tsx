@@ -50,6 +50,27 @@ const WorkspaceModal: ForwardRefRenderFunction<
       }
     }
   }, [isOverlayOpen]);
+
+  useEffect(() => {
+    const handleWorkspaceOpenUrl = (data: { url: string }) => {
+      console.log("workspace-open-url", data);
+      setCurrentUrl(data.url);
+      setCanGoBack(true);
+      console.log("isOverlayOpen", isOverlayOpen, iframeRef.current);
+      // 只在弹窗打开且 iframe 存在时才强制更新
+      if (isOverlayOpen && iframeRef.current) {
+        iframeRef.current.src = data.url;
+      }
+    };
+
+    if (window.electronAPI?.subscribe) {
+      const unsubscribe = window.electronAPI.subscribe(
+        "workspace-open-url",
+        handleWorkspaceOpenUrl,
+      );
+      return unsubscribe;
+    }
+  }, [isOverlayOpen]); // 添加 isOverlayOpen 作为依赖
   const handleGoBack = () => {
     if (iframeRef.current?.contentWindow) {
       iframeRef.current.contentWindow.history.back();

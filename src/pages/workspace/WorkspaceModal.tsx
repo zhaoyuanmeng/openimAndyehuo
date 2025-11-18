@@ -66,7 +66,7 @@ const WorkspaceModal: ForwardRefRenderFunction<
     positionRef.current = newHistory.length - 1;
 
     // 触发组件渲染
-    setForceRender(prev => prev + 1);
+    setForceRender((prev) => prev + 1);
 
     // 加载新 URL
     if (iframeRef.current) {
@@ -85,7 +85,10 @@ const WorkspaceModal: ForwardRefRenderFunction<
     };
 
     if (window.electronAPI?.subscribe) {
-      const unsubscribe = window.electronAPI.subscribe("workspace-open-url", handleOpenUrl);
+      const unsubscribe = window.electronAPI.subscribe(
+        "workspace-open-url",
+        handleOpenUrl,
+      );
       return () => unsubscribe();
     }
   }, [isOverlayOpen]);
@@ -94,7 +97,7 @@ const WorkspaceModal: ForwardRefRenderFunction<
   const handleGoBack = () => {
     if (!canGoBack) return;
     positionRef.current -= 1;
-    setForceRender(prev => prev + 1);
+    setForceRender((prev) => prev + 1);
     if (iframeRef.current) {
       iframeRef.current.src = historyRef.current[positionRef.current];
     }
@@ -105,7 +108,7 @@ const WorkspaceModal: ForwardRefRenderFunction<
   const handleGoForward = () => {
     if (!canGoForward) return;
     positionRef.current += 1;
-    setForceRender(prev => prev + 1);
+    setForceRender((prev) => prev + 1);
     if (iframeRef.current) {
       iframeRef.current.src = historyRef.current[positionRef.current];
     }
@@ -159,11 +162,7 @@ const WorkspaceModal: ForwardRefRenderFunction<
           </span>
         </div>
         <div className="toolbar-right">
-          <button
-            onClick={handleClose}
-            className="toolbar-btn close-btn"
-            title="关闭"
-          >
+          <button onClick={handleClose} className="toolbar-btn close-btn" title="关闭">
             <CloseOutlined />
           </button>
         </div>
@@ -173,7 +172,6 @@ const WorkspaceModal: ForwardRefRenderFunction<
         src={currentUrl}
         className="workspace-iframe"
         title="工作台"
-        sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-popups-to-escape-sandbox"
       />
     </div>
   );

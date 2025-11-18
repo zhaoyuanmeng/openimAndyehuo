@@ -33,10 +33,10 @@ export const Workspace = () => {
     }
   };
   const handleOpenModal = () => {
-    // window.openWorkspace("http://www.chinaxiongan.cn/");
+    window.openWorkspace("http://www.chinaxiongan.cn/");
     // https://www.lanxhan.com/
     // window.openWorkspace("http://144.7.97.233:7080/");
-    window.openWorkspace("https://www.lanxhan.com/");
+    // window.openWorkspace("https://iam.chinaxiongan.cn/idp/oauth2/authorize?redirect_uri=https%3A%2F%2Fxxhfw.xadcity.com%2F&state=1&client_id=jtisp&response_type=code");
   };
 
   const handleClose = () => {

@@ -72,8 +72,6 @@ const WorkspaceModal: ForwardRefRenderFunction<
     if (iframeRef.current) {
       iframeRef.current.src = newUrl;
     }
-
-    console.log("历史记录更新:", newHistory, "当前位置:", positionRef.current);
   };
 
   // 3. 监听 IPC 事件

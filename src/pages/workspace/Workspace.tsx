@@ -63,9 +63,9 @@ export const Workspace = () => {
   return (
     <div className="workspace-container">
       <div className="workspace-toolbar">
-        <button onClick={handleOpenModal} className="toolbar-btn">
+        {/* <button onClick={handleOpenModal} className="toolbar-btn">
           打开弹窗
-        </button>
+        </button> */}
         {/* <button onClick={handleGoBack} disabled={!canGoBack} className="toolbar-btn">
           ← 后退
         </button>
@@ -82,7 +82,7 @@ export const Workspace = () => {
         {/* <button onClick={handleClose} className="toolbar-btn close-btn">
           关闭
         </button> */}
-        <span className="current-url">{currentUrl}</span>
+        {/* <span className="current-url">{currentUrl}</span> */}
       </div>
       <iframe
         ref={iframeRef}

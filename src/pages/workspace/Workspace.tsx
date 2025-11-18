@@ -8,7 +8,8 @@ export const Workspace = () => {
   const [currentUrl, setCurrentUrl] = useState("");
 
   // 配置第三方应用列表的 URL
-  const workspaceUrl = "http://144.7.97.233:7080/";
+  // const workspaceUrl = "http://144.7.97.233:7080/";
+  const workspaceUrl = "http://localhost:5173/";
 
   useEffect(() => {
     setCurrentUrl(workspaceUrl);

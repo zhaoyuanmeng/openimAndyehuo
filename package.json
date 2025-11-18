@@ -11,7 +11,7 @@
     }
   },
   "scripts": {
-    "dev": "vite --force --host",
+    "dev": "vite --force --host --port 9999",
     "build": "vite build",
     "preview": "vite preview",
     "pree2e": "vite build --mode=test",

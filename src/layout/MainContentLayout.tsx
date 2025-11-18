@@ -24,7 +24,6 @@ export const MainContentLayout = () => {
   // 暴露打开工作台的方法给全局使用
   useEffect(() => {
     window.openWorkspace = (url: string) => {
-      console.log(url, "url--------");
       setWorkspaceUrl(url);
       setTimeout(() => {
         console.log("open workspace", workspaceModalRef.current);

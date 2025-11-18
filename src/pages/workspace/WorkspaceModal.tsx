@@ -26,7 +26,6 @@ const WorkspaceModal: ForwardRefRenderFunction<
   const [currentUrl, setCurrentUrl] = useState("");
   const [canGoBack, setCanGoBack] = useState(false);
   const [canGoForward, setCanGoForward] = useState(false);
-  const [leftOffset, setLeftOffset] = useState(0);
 
   // URL 历史栈
   const [urlHistory, setUrlHistory] = useState<string[]>([]);
@@ -34,7 +33,8 @@ const WorkspaceModal: ForwardRefRenderFunction<
 
   // 初始化 URL 历史
   useEffect(() => {
-    if (url && url !== urlHistory[currentIndex]) {
+    console.log(url, isOverlayOpen, urlHistory, currentIndex);
+    if (url && url !== urlHistory[currentIndex] && isOverlayOpen) {
       const newHistory = urlHistory.slice(0, currentIndex + 1);
       newHistory.push(url);
       setUrlHistory(newHistory);
@@ -46,16 +46,6 @@ const WorkspaceModal: ForwardRefRenderFunction<
       setCanGoForward(false);
     }
   }, [url, isOverlayOpen]);
-
-  // 动态计算 LeftNavBar 的宽度
-  useEffect(() => {
-    if (isOverlayOpen) {
-      const leftNavBar = document.querySelector(".left-nav-bar");
-      if (leftNavBar) {
-        setLeftOffset(leftNavBar.getBoundingClientRect().width);
-      }
-    }
-  }, [isOverlayOpen]);
 
   // 监听 IPC 事件,处理 iframe 内部打开的新链接
   useEffect(() => {
@@ -81,6 +71,7 @@ const WorkspaceModal: ForwardRefRenderFunction<
         });
         return [...prevHistory.slice(0, currentIndex + 1), data.url];
       });
+      console.log("Updated history:", urlHistory, currentIndex); // 打印更新后的历史记录
     };
 
     if (window.electronAPI?.subscribe) {

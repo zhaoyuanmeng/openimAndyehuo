@@ -8,7 +8,7 @@ export const Workspace = () => {
   const [currentUrl, setCurrentUrl] = useState("");
 
   // 配置第三方应用列表的 URL
-  const workspaceUrl = "https://www.lanxhan.com/";
+  const workspaceUrl = "http://144.7.97.233:7080/";
 
   useEffect(() => {
     setCurrentUrl(workspaceUrl);
@@ -33,6 +33,8 @@ export const Workspace = () => {
   };
   const handleOpenModal = () => {
     // window.openWorkspace("http://www.chinaxiongan.cn/");
+    // https://www.lanxhan.com/
+    // window.openWorkspace("http://144.7.97.233:7080/");
     window.openWorkspace("https://www.lanxhan.com/");
   };
 

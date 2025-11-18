@@ -45,20 +45,20 @@ export const Workspace = () => {
     window.history.replaceState({}, "", "/"); // 清空历史记录
   };
 
-  // useEffect(() => {
-  //   const handleWorkspaceOpenUrl = (data: { url: string }) => {
-  //     console.log("workspace-open-url---", data.url);
-  //     // window.openWorkspace(data.url); // 打开新窗口
-  //   };
+  useEffect(() => {
+    const handleWorkspaceOpenUrl = (data: { url: string }) => {
+      console.log("workspace-open-url---", data.url);
+      window.openWorkspace(data.url); // 打开新窗口
+    };
 
-  //   if (window.electronAPI?.subscribe) {
-  //     const unsubscribe = window.electronAPI.subscribe(
-  //       "workspace-open-url",
-  //       handleWorkspaceOpenUrl,
-  //     );
-  //     return unsubscribe;
-  //   }
-  // }, []); // 移除依赖项,使用函数式更新
+    if (window.electronAPI?.subscribe) {
+      const unsubscribe = window.electronAPI.subscribe(
+        "workspace-open-url",
+        handleWorkspaceOpenUrl,
+      );
+      return unsubscribe;
+    }
+  }, []); // 移除依赖项,使用函数式更新
 
   return (
     <div className="workspace-container">

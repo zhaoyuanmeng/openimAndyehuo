@@ -41,8 +41,24 @@ export const Workspace = () => {
 
   const handleClose = () => {
     // 返回到主页或关闭当前标签
-    window.history.back();
+    // window.location.href = "/";
+    window.history.replaceState({}, "", "/"); // 清空历史记录
   };
+
+  // useEffect(() => {
+  //   const handleWorkspaceOpenUrl = (data: { url: string }) => {
+  //     console.log("workspace-open-url---", data.url);
+  //     // window.openWorkspace(data.url); // 打开新窗口
+  //   };
+
+  //   if (window.electronAPI?.subscribe) {
+  //     const unsubscribe = window.electronAPI.subscribe(
+  //       "workspace-open-url",
+  //       handleWorkspaceOpenUrl,
+  //     );
+  //     return unsubscribe;
+  //   }
+  // }, []); // 移除依赖项,使用函数式更新
 
   return (
     <div className="workspace-container">
@@ -50,7 +66,7 @@ export const Workspace = () => {
         <button onClick={handleOpenModal} className="toolbar-btn">
           打开弹窗
         </button>
-        <button onClick={handleGoBack} disabled={!canGoBack} className="toolbar-btn">
+        {/* <button onClick={handleGoBack} disabled={!canGoBack} className="toolbar-btn">
           ← 后退
         </button>
         <button
@@ -59,13 +75,13 @@ export const Workspace = () => {
           className="toolbar-btn"
         >
           前进 →
-        </button>
+        </button> */}
         <button onClick={handleRefresh} className="toolbar-btn">
           刷新
         </button>
-        <button onClick={handleClose} className="toolbar-btn close-btn">
+        {/* <button onClick={handleClose} className="toolbar-btn close-btn">
           关闭
-        </button>
+        </button> */}
         <span className="current-url">{currentUrl}</span>
       </div>
       <iframe

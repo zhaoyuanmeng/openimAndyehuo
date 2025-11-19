@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { BrowserWindow, dialog, shell } from "electron";
+import { BrowserWindow, BrowserView, dialog, shell, ipcMain } from "electron";
 import { isLinux, isMac, isWin } from "../utils";
 import { destroyTray } from "./trayManage";
 import { getIsForceQuit } from "./appManage";
@@ -12,7 +12,7 @@ const url = process.env.VITE_DEV_SERVER_URL;
 let mainWindow: BrowserWindow | null = null;
 let splashWindow: BrowserWindow | null = null;
 let sdkInstance: OpenIMSDKMain | null = null;
-
+let workspaceView: BrowserView | null = null; // 新增
 function createSplashWindow() {
   splashWindow = new BrowserWindow({
     frame: false,
@@ -104,6 +104,9 @@ export function createMainWindow() {
   });
   // 初始化截图功能
   initScreenshots(mainWindow);
+
+  // 设置 workspaceView 相关的 IPC 处理函数
+  setupWorkspaceViewHandlers();
   return mainWindow;
 }
 
@@ -269,3 +272,96 @@ export const getWebContents = (): Electron.WebContents => {
   if (!mainWindow) throw new Error("main window is undefined");
   return mainWindow.webContents;
 };
+
+// 新增的
+// BrowserView 管理函数
+function setupWorkspaceViewHandlers() {
+  // 创建或更新 BrowserView
+  ipcMain.on("create-workspace-view", (event, { url, bounds }) => {
+    if (!mainWindow) return;
+
+    if (workspaceView) {
+      // 如果已存在,只更新 URL 和位置
+      workspaceView.setBounds(bounds);
+      if (workspaceView.webContents.getURL() !== url) {
+        workspaceView.webContents.loadURL(url);
+      }
+      return;
+    }
+
+    // 创建新的 BrowserView
+    workspaceView = new BrowserView({
+      webPreferences: {
+        nodeIntegration: false,
+        contextIsolation: true,
+        sandbox: false, // 允许完整的浏览器功能,支持 cookie
+        webSecurity: false, // 与主窗口保持一致
+      },
+    });
+
+    mainWindow.setBrowserView(workspaceView);
+    workspaceView.setBounds(bounds);
+    workspaceView.setAutoResize({
+      width: true,
+      height: true,
+      horizontal: true,
+      vertical: true,
+    });
+
+    workspaceView.webContents.loadURL(url);
+
+    // 监听导航事件
+    workspaceView.webContents.on("did-navigate", () => {
+      if (mainWindow && workspaceView) {
+        mainWindow.webContents.send("workspace-navigation-changed", {
+          canGoBack: workspaceView.webContents.canGoBack(),
+          canGoForward: workspaceView.webContents.canGoForward(),
+          url: workspaceView.webContents.getURL(),
+        });
+      }
+    });
+
+    workspaceView.webContents.on("did-navigate-in-page", () => {
+      if (mainWindow && workspaceView) {
+        mainWindow.webContents.send("workspace-navigation-changed", {
+          canGoBack: workspaceView.webContents.canGoBack(),
+          canGoForward: workspaceView.webContents.canGoForward(),
+          url: workspaceView.webContents.getURL(),
+        });
+      }
+    });
+  });
+
+  // 销毁 BrowserView
+  ipcMain.on("destroy-workspace-view", () => {
+    if (workspaceView && mainWindow) {
+      mainWindow.removeBrowserView(workspaceView);
+      // 移除这行: workspaceView.webContents.destroy();
+      workspaceView = null; // 只需要设置为 null
+    }
+  });
+
+  // 刷新
+  ipcMain.on("refresh-workspace-view", () => {
+    if (workspaceView) {
+      workspaceView.webContents.reload();
+    }
+  });
+
+  // 后退
+  ipcMain.on("workspace-go-back", () => {
+    if (workspaceView && workspaceView.webContents.canGoBack()) {
+      workspaceView.webContents.goBack();
+    }
+  });
+
+  // 前进
+  ipcMain.on("workspace-go-forward", () => {
+    if (workspaceView && workspaceView.webContents.canGoForward()) {
+      workspaceView.webContents.goForward();
+    }
+  });
+}
+
+// 导出 workspaceView 的 getter(可选)
+export const getWorkspaceView = (): BrowserView | null => workspaceView;

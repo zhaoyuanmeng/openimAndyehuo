@@ -116,6 +116,33 @@ const Api: IElectronAPI = {
   getFileByPath,
   saveFileToDisk,
   startScreenshot: (hideWindow?: boolean) => ipcInvoke('start-screenshot', hideWindow), // 新增
+
+    // 新增 BrowserView 相关方法  
+  createWorkspaceView: (url: string, bounds: { x: number; y: number; width: number; height: number }) => {  
+    ipcRenderer.send('create-workspace-view', { url, bounds });  
+  },  
+    
+  destroyWorkspaceView: () => {  
+    ipcRenderer.send('destroy-workspace-view');  
+  },  
+    
+  refreshWorkspaceView: () => {  
+    ipcRenderer.send('refresh-workspace-view');  
+  },  
+    
+  workspaceGoBack: () => {  
+    ipcRenderer.send('workspace-go-back');  
+  },  
+    
+  workspaceGoForward: () => {  
+    ipcRenderer.send('workspace-go-forward');  
+  },  
+    
+  onWorkspaceNavigationChanged: (callback: (data: { canGoBack: boolean; canGoForward: boolean; url: string }) => void) => {  
+    const subscription = (_, data) => callback(data);  
+    ipcRenderer.on('workspace-navigation-changed', subscription);  
+    return () => ipcRenderer.removeListener('workspace-navigation-changed', subscription);  
+  },  
 };
 
 contextBridge.exposeInMainWorld("electronAPI", Api);

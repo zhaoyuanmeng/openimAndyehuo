@@ -15,6 +15,23 @@ export interface IElectronAPI {
   saveFileToDisk: (params: { file: File; sync?: boolean }) => Promise<string>;
   getFileByPath: (filePath: string) => Promise<{ file: File; path: string } | null>;
   startScreenshot: (hideWindow?: boolean) => Promise<void>; // 新增
+
+  // 新增 BrowserView 相关类型
+  createWorkspaceView: (
+    url: string,
+    bounds: { x: number; y: number; width: number; height: number },
+  ) => void;
+  destroyWorkspaceView: () => void;
+  refreshWorkspaceView: () => void;
+  workspaceGoBack: () => void;
+  workspaceGoForward: () => void;
+  onWorkspaceNavigationChanged: (
+    callback: (data: {
+      canGoBack: boolean;
+      canGoForward: boolean;
+      url: string;
+    }) => void,
+  ) => () => void;
 }
 
 declare global {
@@ -23,6 +40,8 @@ declare global {
     userClick: (userID?: string, groupID?: string) => void;
     editRevoke: (clientMsgID: string) => void;
     screenshotPreview: (results: string) => void;
+
+    openWorkspace?: (url: any) => any;
   }
 }
 

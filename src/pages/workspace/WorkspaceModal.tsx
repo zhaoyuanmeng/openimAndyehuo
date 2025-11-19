@@ -12,7 +12,8 @@ import {
   useEffect,
 } from "react";
 import { OverlayVisibleHandle, useOverlayVisible } from "@/hooks/useOverlayVisible";
-import "./workspace.scss";
+import "./workspaceModal.scss";
+
 interface WorkspaceModalProps {
   url?: string;
 }
@@ -22,63 +23,75 @@ const WorkspaceModal: ForwardRefRenderFunction<
   WorkspaceModalProps
 > = ({ url }, ref) => {
   const { isOverlayOpen, closeOverlay } = useOverlayVisible(ref);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  // 用 ref 缓存历史记录和位置，避免状态更新滞后问题
-  const historyRef = useRef<string[]>([]);
-  const positionRef = useRef<number>(-1);
-  // 状态仅用于触发渲染
-  const [, setForceRender] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // 暴露给组件的状态（从 ref 中获取最新值）
-  const currentUrl = historyRef.current[positionRef.current] || "";
-  const canGoBack = positionRef.current > 0;
-  const canGoForward = positionRef.current < historyRef.current.length - 1;
+  // 导航状态由 BrowserView 自动维护
+  const [canGoBack, setCanGoBack] = useState(false);
+  const [canGoForward, setCanGoForward] = useState(false);
+  const [currentUrl, setCurrentUrl] = useState("");
 
-  // 1. 初始化 URL
-  useEffect(() => {
-    if (isOverlayOpen && url && url.trim() !== "") {
-      if (url !== currentUrl) {
-        addToHistory(url);
-      }
-    }
-  }, [url, isOverlayOpen]);
+  // 计算 BrowserView 的位置和大小
+  const calculateBounds = () => {
+    if (!containerRef.current) return null;
 
-  // 2. 核心方法：添加到历史记录（用 ref 确保同步更新）
-  const addToHistory = (newUrl: string) => {
-    if (!newUrl || newUrl === currentUrl) {
-      // 重复 URL 只刷新
-      if (iframeRef.current) {
-        iframeRef.current.src = newUrl;
-      }
-      return;
-    }
+    const toolbar = containerRef.current.querySelector(".workspace-toolbar");
+    const toolbarHeight = toolbar?.clientHeight || 48; // 工具栏高度
+    const rect = containerRef.current.getBoundingClientRect();
 
-    // 从 ref 中获取最新的历史和位置（避免状态滞后）
-    const currentHistory = [...historyRef.current];
-    const currentPos = positionRef.current;
-
-    // 截断当前位置后的记录，添加新 URL
-    const newHistory = currentHistory.slice(0, currentPos + 1);
-    newHistory.push(newUrl);
-
-    // 更新 ref（同步操作，立即生效）
-    historyRef.current = newHistory;
-    positionRef.current = newHistory.length - 1;
-
-    // 触发组件渲染
-    setForceRender((prev) => prev + 1);
-
-    // 加载新 URL
-    if (iframeRef.current) {
-      iframeRef.current.src = newUrl;
-    }
+    return {
+      x: Math.round(rect.x),
+      y: Math.round(rect.y + toolbarHeight),
+      width: Math.round(rect.width),
+      height: Math.round(rect.height - toolbarHeight),
+    };
   };
 
-  // 3. 监听 IPC 事件
+  // 1. 初始化和创建 BrowserView
   useEffect(() => {
+    if (isOverlayOpen && url && url.trim() !== "") {
+      const bounds = calculateBounds();
+      if (bounds && window.electronAPI?.createWorkspaceView) {
+        window.electronAPI.createWorkspaceView(url, bounds);
+        setCurrentUrl(url);
+      }
+    }
+
+    // 监听导航状态变化
+    if (window.electronAPI?.onWorkspaceNavigationChanged) {
+      const unsubscribe = window.electronAPI.onWorkspaceNavigationChanged((data) => {
+        setCanGoBack(data.canGoBack);
+        setCanGoForward(data.canGoForward);
+        setCurrentUrl(data.url);
+      });
+      return unsubscribe;
+    }
+  }, [isOverlayOpen, url]);
+
+  // 2. 监听窗口大小变化,更新 BrowserView 位置
+  useEffect(() => {
+    if (!isOverlayOpen) return;
+
+    const handleResize = () => {
+      const bounds = calculateBounds();
+      if (bounds && currentUrl && window.electronAPI?.createWorkspaceView) {
+        window.electronAPI.createWorkspaceView(currentUrl, bounds);
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [isOverlayOpen, currentUrl]);
+
+  // 3. 监听 IPC 事件(打开新 URL)
+  useEffect(() => {
+    if (!isOverlayOpen) return;
+
     const handleOpenUrl = (data: { url: string }) => {
-      if (isOverlayOpen && data?.url) {
-        addToHistory(data.url);
+      if (data?.url) {
+        const bounds = calculateBounds();
+        if (bounds && window.electronAPI?.createWorkspaceView) {
+          window.electronAPI.createWorkspaceView(data.url, bounds);
+        }
       }
     };
 
@@ -91,47 +104,55 @@ const WorkspaceModal: ForwardRefRenderFunction<
     }
   }, [isOverlayOpen]);
 
-  // 4. 后退
+  // 4. 后退 - 使用 BrowserView 的内置历史记录
   const handleGoBack = () => {
-    if (!canGoBack) return;
-    positionRef.current -= 1;
-    setForceRender((prev) => prev + 1);
-    if (iframeRef.current) {
-      iframeRef.current.src = historyRef.current[positionRef.current];
+    if (window.electronAPI?.workspaceGoBack) {
+      window.electronAPI.workspaceGoBack();
     }
-    console.log("后退到:", positionRef.current, historyRef.current);
   };
 
-  // 5. 前进
+  // 5. 前进 - 使用 BrowserView 的内置历史记录
   const handleGoForward = () => {
-    if (!canGoForward) return;
-    positionRef.current += 1;
-    setForceRender((prev) => prev + 1);
-    if (iframeRef.current) {
-      iframeRef.current.src = historyRef.current[positionRef.current];
+    if (window.electronAPI?.workspaceGoForward) {
+      window.electronAPI.workspaceGoForward();
     }
-    console.log("前进到:", positionRef.current, historyRef.current);
   };
 
   // 6. 刷新
   const handleRefresh = () => {
-    if (currentUrl && iframeRef.current) {
-      iframeRef.current.src = currentUrl;
+    if (window.electronAPI?.refreshWorkspaceView) {
+      window.electronAPI.refreshWorkspaceView();
     }
   };
 
   // 7. 关闭
   const handleClose = () => {
+    if (window.electronAPI?.destroyWorkspaceView) {
+      window.electronAPI.destroyWorkspaceView();
+    }
     closeOverlay();
-    historyRef.current = [];
-    positionRef.current = -1;
-    setForceRender(0);
+    setCanGoBack(false);
+    setCanGoForward(false);
+    setCurrentUrl("");
   };
+
+  // 组件卸载时清理 BrowserView
+  useEffect(() => {
+    return () => {
+      if (window.electronAPI?.destroyWorkspaceView) {
+        window.electronAPI.destroyWorkspaceView();
+      }
+    };
+  }, []);
 
   if (!isOverlayOpen) return null;
 
   return (
-    <div className="workspace-modal-overlay" style={{ left: "60px" }}>
+    <div
+      className="workspace-modal-overlay"
+      style={{ left: "60px" }}
+      ref={containerRef}
+    >
       <div className="workspace-toolbar">
         <div className="toolbar-left">
           <button
@@ -165,12 +186,8 @@ const WorkspaceModal: ForwardRefRenderFunction<
           </button>
         </div>
       </div>
-      <iframe
-        ref={iframeRef}
-        src={currentUrl}
-        className="workspace-iframe"
-        title="工作台"
-      />
+      {/* BrowserView 会覆盖这个区域 */}
+      <div className="workspace-content" style={{ flex: 1 }} />
     </div>
   );
 };

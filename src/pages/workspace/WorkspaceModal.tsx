@@ -12,7 +12,7 @@ import {
   useEffect,
 } from "react";
 import { OverlayVisibleHandle, useOverlayVisible } from "@/hooks/useOverlayVisible";
-
+import "./workspace.scss";
 interface WorkspaceModalProps {
   url?: string;
 }

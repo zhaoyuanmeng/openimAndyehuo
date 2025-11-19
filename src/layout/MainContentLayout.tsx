@@ -28,7 +28,7 @@ export const MainContentLayout = () => {
       setTimeout(() => {
         console.log("open workspace", workspaceModalRef.current);
         workspaceModalRef.current?.openOverlay();
-      }, 200);
+      }, 0);
     };
   }, []);
   useMount(() => {

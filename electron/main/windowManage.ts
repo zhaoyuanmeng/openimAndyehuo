@@ -330,6 +330,22 @@ function setupWorkspaceViewHandlers() {
         });
       }
     });
+
+    workspaceView.webContents.setWindowOpenHandler(({ url, disposition }) => {
+      console.log("BrowserView windowOpenHandler:", { url, disposition });
+
+      if (disposition === "foreground-tab" || disposition === "new-window") {
+        // 在当前 BrowserView 中打开
+        workspaceView?.webContents.loadURL(url);
+        return { action: "deny" };
+      }
+
+      // 其他链接在外部浏览器打开
+      if (url.startsWith("https:") || url.startsWith("http:")) {
+        shell.openExternal(url);
+      }
+      return { action: "deny" };
+    });
   });
 
   // 销毁 BrowserView

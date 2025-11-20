@@ -9,11 +9,14 @@ import LeftNavBar from "./LeftNavBar";
 import TopSearchBar from "./TopSearchBar";
 import { useGlobalEvent } from "./useGlobalEvents";
 import { useRef, useState, useEffect } from "react";
+import { useKeepOutlet } from "../keepalive";
+import { useLocation } from "react-router-dom";
 export const MainContentLayout = () => {
   useGlobalEvent();
   const matches = useMatches();
   const navigate = useNavigate();
-
+  const { pathname } = useLocation();
+  const element = useKeepOutlet();
   const progress = useUserStore((state) => state.progress);
   const syncState = useUserStore((state) => state.syncState);
   const reinstall = useUserStore((state) => state.reinstall);
@@ -50,7 +53,8 @@ export const MainContentLayout = () => {
         <TopSearchBar />
         <Layout className="relative">
           <LeftNavBar />
-          <Outlet />
+          {/* <Outlet /> */}
+          {element}
           <WorkspaceModal ref={workspaceModalRef} url={workspaceUrl} />
         </Layout>
       </Layout>

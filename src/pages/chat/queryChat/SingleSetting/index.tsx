@@ -95,7 +95,7 @@ const SingleSetting: ForwardRefRenderFunction<OverlayVisibleHandle, unknown> = (
         visible: false,
       }}
       width={450}
-      getContainer={"#chat-container"}
+      getContainer={() => document.body}
     >
       <div
         className="flex cursor-pointer items-center justify-between p-4"

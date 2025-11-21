@@ -1,3 +1,4 @@
+// WorkspaceModal.tsx
 import {
   CloseOutlined,
   ReloadOutlined,
@@ -25,17 +26,15 @@ const WorkspaceModal: ForwardRefRenderFunction<
   const { isOverlayOpen, closeOverlay } = useOverlayVisible(ref);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // 导航状态由 BrowserView 自动维护
   const [canGoBack, setCanGoBack] = useState(false);
   const [canGoForward, setCanGoForward] = useState(false);
   const [currentUrl, setCurrentUrl] = useState("");
 
-  // 计算 BrowserView 的位置和大小
   const calculateBounds = () => {
     if (!containerRef.current) return null;
 
     const toolbar = containerRef.current.querySelector(".workspace-toolbar");
-    const toolbarHeight = toolbar?.clientHeight || 48; // 工具栏高度
+    const toolbarHeight = toolbar?.clientHeight || 48;
     const rect = containerRef.current.getBoundingClientRect();
 
     return {
@@ -46,19 +45,19 @@ const WorkspaceModal: ForwardRefRenderFunction<
     };
   };
 
-  // 1. 初始化和创建 BrowserView
+  // 初始化和创建Modal专用BrowserView
   useEffect(() => {
     if (isOverlayOpen && url && url.trim() !== "") {
       const bounds = calculateBounds();
-      if (bounds && window.electronAPI?.createWorkspaceView) {
-        window.electronAPI.createWorkspaceView(url, bounds);
+      if (bounds && window.electronAPI?.createModalWorkspaceView) {
+        window.electronAPI.createModalWorkspaceView(url, bounds);
         setCurrentUrl(url);
       }
     }
 
     // 监听导航状态变化
-    if (window.electronAPI?.onWorkspaceNavigationChanged) {
-      const unsubscribe = window.electronAPI.onWorkspaceNavigationChanged((data) => {
+    if (window.electronAPI?.onModalWorkspaceNavigationChanged) {
+      const unsubscribe = window.electronAPI.onModalWorkspaceNavigationChanged((data) => {
         setCanGoBack(data.canGoBack);
         setCanGoForward(data.canGoForward);
         setCurrentUrl(data.url);
@@ -67,14 +66,14 @@ const WorkspaceModal: ForwardRefRenderFunction<
     }
   }, [isOverlayOpen, url]);
 
-  // 2. 监听窗口大小变化,更新 BrowserView 位置
+  // 监听窗口大小变化,更新位置
   useEffect(() => {
     if (!isOverlayOpen) return;
 
     const handleResize = () => {
       const bounds = calculateBounds();
-      if (bounds && currentUrl && window.electronAPI?.createWorkspaceView) {
-        window.electronAPI.createWorkspaceView(currentUrl, bounds);
+      if (bounds && currentUrl && window.electronAPI?.createModalWorkspaceView) {
+        window.electronAPI.createModalWorkspaceView(currentUrl, bounds);
       }
     };
 
@@ -82,15 +81,15 @@ const WorkspaceModal: ForwardRefRenderFunction<
     return () => window.removeEventListener("resize", handleResize);
   }, [isOverlayOpen, currentUrl]);
 
-  // 3. 监听 IPC 事件(打开新 URL)
+  // 监听IPC事件(打开新URL)
   useEffect(() => {
     if (!isOverlayOpen) return;
 
     const handleOpenUrl = (data: { url: string }) => {
       if (data?.url) {
         const bounds = calculateBounds();
-        if (bounds && window.electronAPI?.createWorkspaceView) {
-          window.electronAPI.createWorkspaceView(data.url, bounds);
+        if (bounds && window.electronAPI?.createModalWorkspaceView) {
+          window.electronAPI.createModalWorkspaceView(data.url, bounds);
         }
       }
     };
@@ -98,37 +97,37 @@ const WorkspaceModal: ForwardRefRenderFunction<
     if (window.electronAPI?.subscribe) {
       const unsubscribe = window.electronAPI.subscribe(
         "workspace-open-url",
-        handleOpenUrl,
+        handleOpenUrl
       );
       return () => unsubscribe();
     }
   }, [isOverlayOpen]);
 
-  // 4. 后退 - 使用 BrowserView 的内置历史记录
+  // 后退
   const handleGoBack = () => {
-    if (window.electronAPI?.workspaceGoBack) {
-      window.electronAPI.workspaceGoBack();
+    if (window.electronAPI?.modalWorkspaceGoBack) {
+      window.electronAPI.modalWorkspaceGoBack();
     }
   };
 
-  // 5. 前进 - 使用 BrowserView 的内置历史记录
+  // 前进
   const handleGoForward = () => {
-    if (window.electronAPI?.workspaceGoForward) {
-      window.electronAPI.workspaceGoForward();
+    if (window.electronAPI?.modalWorkspaceGoForward) {
+      window.electronAPI.modalWorkspaceGoForward();
     }
   };
 
-  // 6. 刷新
+  // 刷新
   const handleRefresh = () => {
-    if (window.electronAPI?.refreshWorkspaceView) {
-      window.electronAPI.refreshWorkspaceView();
+    if (window.electronAPI?.refreshModalWorkspaceView) {
+      window.electronAPI.refreshModalWorkspaceView();
     }
   };
 
-  // 7. 关闭
+  // 关闭
   const handleClose = () => {
-    if (window.electronAPI?.destroyWorkspaceView) {
-      window.electronAPI.destroyWorkspaceView();
+    if (window.electronAPI?.destroyModalWorkspaceView) {
+      window.electronAPI.destroyModalWorkspaceView();
     }
     closeOverlay();
     setCanGoBack(false);
@@ -136,11 +135,11 @@ const WorkspaceModal: ForwardRefRenderFunction<
     setCurrentUrl("");
   };
 
-  // 组件卸载时清理 BrowserView
+  // 组件卸载时清理
   useEffect(() => {
     return () => {
-      if (window.electronAPI?.destroyWorkspaceView) {
-        window.electronAPI.destroyWorkspaceView();
+      if (window.electronAPI?.destroyModalWorkspaceView) {
+        window.electronAPI.destroyModalWorkspaceView();
       }
     };
   }, []);
@@ -186,7 +185,6 @@ const WorkspaceModal: ForwardRefRenderFunction<
           </button>
         </div>
       </div>
-      {/* BrowserView 会覆盖这个区域 */}
       <div className="workspace-content" style={{ flex: 1 }} />
     </div>
   );

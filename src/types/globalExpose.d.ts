@@ -41,6 +41,24 @@ export interface IElectronAPI {
       url: string;
     }) => void,
   ) => () => void;
+
+  // modal
+   // 新增Modal Workspace相关方法
+  createModalWorkspaceView: (
+    url: string,
+    bounds: { x: number; y: number; width: number; height: number }
+  ) => void;
+  destroyModalWorkspaceView: () => void;
+  hideModalWorkspaceView: () => void;
+  showModalWorkspaceView: () => void;
+  toggleModalWorkspaceView: () => void;
+  modalWorkspaceGoHome: () => void;
+  refreshModalWorkspaceView: () => void;
+  modalWorkspaceGoBack: () => void;
+  modalWorkspaceGoForward: () => void;
+  onModalWorkspaceNavigationChanged: (
+    callback: (data: WorkspaceNavigationState) => void
+  ) => () => void;
 }
 
 declare global {

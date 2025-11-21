@@ -17,6 +17,14 @@ let workspaceView: BrowserView | null = null;
 let workspaceViewBounds: Electron.Rectangle | null = null;
 let workspaceViewURL: string | null = null;
 let workspaceHomeURL: string | null = null; // 新增：存储首页URL
+
+// modal窗口
+
+let modalWorkspaceView: BrowserView | null = null;
+let modalWorkspaceViewBounds: Electron.Rectangle | null = null;
+let modalWorkspaceViewURL: string | null = null;
+let modalWorkspaceHomeURL: string | null = null;
+
 function createSplashWindow() {
   splashWindow = new BrowserWindow({
     frame: false,
@@ -125,6 +133,7 @@ export function createMainWindow() {
 
   initScreenshots(mainWindow);
   setupWorkspaceViewHandlers();
+  setupWorkspaceModalViewHandlers();
   return mainWindow;
 }
 
@@ -444,6 +453,147 @@ function setupWorkspaceViewHandlers() {
         vertical: true,
       });
       console.log("BrowserView 已显示，当前URL:", workspaceViewURL);
+    }
+  });
+}
+
+function setupWorkspaceModalViewHandlers() {
+  ipcMain.on("create-modal-workspace-view", (event, { url, bounds }) => {
+    if (!mainWindow) return;
+
+    modalWorkspaceViewBounds = bounds || mainWindow.getContentBounds();
+    modalWorkspaceViewURL = url;
+    modalWorkspaceHomeURL = url;
+
+    if (modalWorkspaceView) {
+      modalWorkspaceView.setBounds(modalWorkspaceViewBounds);
+      mainWindow.setBrowserView(modalWorkspaceView);
+      if (modalWorkspaceView.webContents.getURL() !== url) {
+        modalWorkspaceView.webContents.loadURL(url);
+      }
+      return;
+    }
+
+    modalWorkspaceView = new BrowserView({
+      webPreferences: {
+        nodeIntegration: false,
+        contextIsolation: true,
+        sandbox: false,
+        webSecurity: false,
+      },
+    });
+
+    mainWindow.setBrowserView(modalWorkspaceView);
+    modalWorkspaceView.setBounds(modalWorkspaceViewBounds);
+    modalWorkspaceView.setAutoResize({
+      width: true,
+      height: true,
+      horizontal: true,
+      vertical: true,
+    });
+
+    modalWorkspaceView.webContents.loadURL(url);
+
+    const updateModalNavigationState = () => {
+      if (mainWindow && modalWorkspaceView) {
+        modalWorkspaceViewURL = modalWorkspaceView.webContents.getURL();
+        mainWindow.webContents.send("modal-workspace-navigation-changed", {
+          canGoBack: modalWorkspaceView.webContents.canGoBack(),
+          canGoForward: modalWorkspaceView.webContents.canGoForward(),
+          url: modalWorkspaceViewURL,
+        });
+      }
+    };
+
+    modalWorkspaceView.webContents.on("did-navigate", updateModalNavigationState);
+    modalWorkspaceView.webContents.on(
+      "did-navigate-in-page",
+      updateModalNavigationState,
+    );
+
+    modalWorkspaceView.webContents.setWindowOpenHandler(({ url, disposition }) => {
+      console.log("Modal BrowserView windowOpenHandler:", { url, disposition });
+
+      if (disposition === "foreground-tab" || disposition === "new-window") {
+        modalWorkspaceView?.webContents.loadURL(url);
+        modalWorkspaceViewURL = url;
+        return { action: "deny" };
+      }
+
+      if (url.startsWith("https:") || url.startsWith("http:")) {
+        shell.openExternal(url);
+      }
+      return { action: "deny" };
+    });
+  });
+
+  ipcMain.on("destroy-modal-workspace-view", () => {
+    if (modalWorkspaceView && mainWindow) {
+      mainWindow.removeBrowserView(modalWorkspaceView);
+      modalWorkspaceView = null;
+      modalWorkspaceViewBounds = null;
+      modalWorkspaceViewURL = null;
+      modalWorkspaceHomeURL = null;
+      console.log("Modal BrowserView 已彻底销毁");
+    }
+  });
+
+  ipcMain.on("modal-workspace-go-home", () => {
+    if (!modalWorkspaceView || !modalWorkspaceHomeURL) return;
+    modalWorkspaceView.webContents.loadURL(modalWorkspaceHomeURL);
+    modalWorkspaceViewURL = modalWorkspaceHomeURL;
+  });
+
+  ipcMain.on("refresh-modal-workspace-view", () => {
+    modalWorkspaceView?.webContents.reload();
+  });
+
+  ipcMain.on("modal-workspace-go-back", () => {
+    if (modalWorkspaceView && modalWorkspaceView.webContents.canGoBack()) {
+      modalWorkspaceView.webContents.goBack();
+    }
+  });
+
+  ipcMain.on("modal-workspace-go-forward", () => {
+    if (modalWorkspaceView && modalWorkspaceView.webContents.canGoForward()) {
+      modalWorkspaceView.webContents.goForward();
+    }
+  });
+
+  ipcMain.on("hide-modal-workspace-view", () => {
+    if (modalWorkspaceView && mainWindow) {
+      mainWindow.removeBrowserView(modalWorkspaceView);
+    }
+  });
+
+  ipcMain.on("show-modal-workspace-view", () => {
+    if (modalWorkspaceView && mainWindow && modalWorkspaceViewBounds) {
+      mainWindow.setBrowserView(modalWorkspaceView);
+      modalWorkspaceView.setBounds(modalWorkspaceViewBounds);
+      modalWorkspaceView.setAutoResize({
+        width: true,
+        height: true,
+        horizontal: true,
+        vertical: true,
+      });
+    }
+  });
+
+  ipcMain.on("toggle-modal-workspace-view", () => {
+    if (!modalWorkspaceView || !mainWindow || !modalWorkspaceViewBounds) return;
+    const isVisible = mainWindow.getBrowserViews().includes(modalWorkspaceView);
+
+    if (isVisible) {
+      mainWindow.removeBrowserView(modalWorkspaceView);
+    } else {
+      mainWindow.setBrowserView(modalWorkspaceView);
+      modalWorkspaceView.setBounds(modalWorkspaceViewBounds);
+      modalWorkspaceView.setAutoResize({
+        width: true,
+        height: true,
+        horizontal: true,
+        vertical: true,
+      });
     }
   });
 }

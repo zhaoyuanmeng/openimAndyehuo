@@ -157,6 +157,41 @@ const Api: IElectronAPI = {
     return () =>
       ipcRenderer.removeListener("workspace-navigation-changed", subscription);
   },
+
+  createModalWorkspaceView: (
+    url: string,
+    bounds: { x: number; y: number; width: number; height: number },
+  ) => {
+    ipcRenderer.send("create-modal-workspace-view", { url, bounds });
+  },
+  destroyModalWorkspaceView: () => {
+    ipcRenderer.send("destroy-modal-workspace-view");
+  },
+  hideModalWorkspaceView: () => ipcRenderer.send("hide-modal-workspace-view"),
+  showModalWorkspaceView: () => ipcRenderer.send("show-modal-workspace-view"),
+  toggleModalWorkspaceView: () => ipcRenderer.send("toggle-modal-workspace-view"),
+  modalWorkspaceGoHome: () => ipcRenderer.send("modal-workspace-go-home"),
+  refreshModalWorkspaceView: () => {
+    ipcRenderer.send("refresh-modal-workspace-view");
+  },
+  modalWorkspaceGoBack: () => {
+    ipcRenderer.send("modal-workspace-go-back");
+  },
+  modalWorkspaceGoForward: () => {
+    ipcRenderer.send("modal-workspace-go-forward");
+  },
+  onModalWorkspaceNavigationChanged: (
+    callback: (data: {
+      canGoBack: boolean;
+      canGoForward: boolean;
+      url: string;
+    }) => void,
+  ) => {
+    const subscription = (_, data) => callback(data);
+    ipcRenderer.on("modal-workspace-navigation-changed", subscription);
+    return () =>
+      ipcRenderer.removeListener("modal-workspace-navigation-changed", subscription);
+  },
 };
 
 contextBridge.exposeInMainWorld("electronAPI", Api);

@@ -67,18 +67,18 @@ const getUniqueSavePath = (originalPath: string) => {
   return savePath;
 };
 
-const getFileByPath = async (filePath: string) => {  
-  try {  
-    const filename = path.basename(filePath);  
-    const data = await fs.promises.readFile(filePath);  
-    const file = new File([data], filename, { type: 'image/png' });  
-      
-    // 返回一个包含 file 和 path 的对象  
-    return { file, path: filePath };  
-  } catch (error) {  
-    console.log(error);  
-    return null;  
-  }  
+const getFileByPath = async (filePath: string) => {
+  try {
+    const filename = path.basename(filePath);
+    const data = await fs.promises.readFile(filePath);
+    const file = new File([data], filename, { type: "image/png" });
+
+    // 返回一个包含 file 和 path 的对象
+    return { file, path: filePath };
+  } catch (error) {
+    console.log(error);
+    return null;
+  }
 };
 
 const saveFileToDisk = async ({
@@ -115,34 +115,47 @@ const Api: IElectronAPI = {
   ipcSendSync,
   getFileByPath,
   saveFileToDisk,
-  startScreenshot: (hideWindow?: boolean) => ipcInvoke('start-screenshot', hideWindow), // 新增
+  startScreenshot: (hideWindow?: boolean) => ipcInvoke("start-screenshot", hideWindow), // 新增
 
-    // 新增 BrowserView 相关方法  
-  createWorkspaceView: (url: string, bounds: { x: number; y: number; width: number; height: number }) => {  
-    ipcRenderer.send('create-workspace-view', { url, bounds });  
-  },  
-    
-  destroyWorkspaceView: () => {  
-    ipcRenderer.send('destroy-workspace-view');  
-  },  
-    
-  refreshWorkspaceView: () => {  
-    ipcRenderer.send('refresh-workspace-view');  
-  },  
-    
-  workspaceGoBack: () => {  
-    ipcRenderer.send('workspace-go-back');  
-  },  
-    
-  workspaceGoForward: () => {  
-    ipcRenderer.send('workspace-go-forward');  
-  },  
-    
-  onWorkspaceNavigationChanged: (callback: (data: { canGoBack: boolean; canGoForward: boolean; url: string }) => void) => {  
-    const subscription = (_, data) => callback(data);  
-    ipcRenderer.on('workspace-navigation-changed', subscription);  
-    return () => ipcRenderer.removeListener('workspace-navigation-changed', subscription);  
-  },  
+  // 新增 BrowserView 相关方法
+  createWorkspaceView: (
+    url: string,
+    bounds: { x: number; y: number; width: number; height: number },
+  ) => {
+    ipcRenderer.send("create-workspace-view", { url, bounds });
+  },
+
+  destroyWorkspaceView: () => {
+    ipcRenderer.send("destroy-workspace-view");
+  },
+  hideWorkspaceView: () => ipcRenderer.send("hide-workspace-view"),
+  showWorkspaceView: () => ipcRenderer.send("show-workspace-view"),
+  toggleWorkspaceView: () => ipcRenderer.send("toggle-workspace-view"),
+
+  refreshWorkspaceView: () => {
+    ipcRenderer.send("refresh-workspace-view");
+  },
+
+  workspaceGoBack: () => {
+    ipcRenderer.send("workspace-go-back");
+  },
+
+  workspaceGoForward: () => {
+    ipcRenderer.send("workspace-go-forward");
+  },
+
+  onWorkspaceNavigationChanged: (
+    callback: (data: {
+      canGoBack: boolean;
+      canGoForward: boolean;
+      url: string;
+    }) => void,
+  ) => {
+    const subscription = (_, data) => callback(data);
+    ipcRenderer.on("workspace-navigation-changed", subscription);
+    return () =>
+      ipcRenderer.removeListener("workspace-navigation-changed", subscription);
+  },
 };
 
 contextBridge.exposeInMainWorld("electronAPI", Api);

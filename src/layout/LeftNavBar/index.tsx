@@ -98,7 +98,12 @@ const NavItem = ({ nav: { icon, icon_active, title, path } }: { nav: NavItemType
     if (isActive) {
       return;
     }
-
+    console.log("tryNavigate", path);
+    if (path === "/WorkspacePage") {
+      window.electronAPI?.showWorkspaceView();
+    } else {
+      window.electronAPI?.hideWorkspaceView();
+    }
     // TODO Keep answering when jumping back to chat from another page (if there is one)
     navigator.push(path);
   };

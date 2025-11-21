@@ -25,6 +25,13 @@ export interface IElectronAPI {
   refreshWorkspaceView: () => void;
   workspaceGoBack: () => void;
   workspaceGoForward: () => void;
+  // ---------------------- 新增的三个 BrowserView 控制方法 ----------------------
+  /** 隐藏工作台（不销毁实例，保留状态） */
+  hideWorkspaceView: () => void;
+  /** 显示工作台（恢复之前的实例和状态） */
+  showWorkspaceView: () => void;
+  /** 切换工作台显示/隐藏状态 */
+  toggleWorkspaceView: () => void;
   onWorkspaceNavigationChanged: (
     callback: (data: {
       canGoBack: boolean;

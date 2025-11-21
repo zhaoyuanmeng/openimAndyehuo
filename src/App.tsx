@@ -35,6 +35,7 @@ function App() {
             <KeepAlive
               keepPaths={[
                 /^\/chat\/?.*/, // 匹配 /chat 及所有子路径（如 /chat/123）
+                /^\/WorkspacePage\/?.*/, // 匹配 /chat 及所有子路径（如 /chat/123）
               ]}
             >
               <RouterProvider router={router} />

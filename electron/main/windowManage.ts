@@ -12,7 +12,11 @@ const url = process.env.VITE_DEV_SERVER_URL;
 let mainWindow: BrowserWindow | null = null;
 let splashWindow: BrowserWindow | null = null;
 let sdkInstance: OpenIMSDKMain | null = null;
-let workspaceView: BrowserView | null = null; // 新增
+let workspaceView: BrowserView | null = null;
+// 保存BrowserView状态（位置、URL），用于隐藏后恢复
+let workspaceViewBounds: Electron.Rectangle | null = null;
+let workspaceViewURL: string | null = null;
+
 function createSplashWindow() {
   splashWindow = new BrowserWindow({
     frame: false,
@@ -41,9 +45,6 @@ export function createMainWindow() {
     titleBarStyle: "hiddenInset",
     webPreferences: {
       preload: global.pathConfig.preload,
-      // Warning: Enable nodeIntegration and disable contextIsolation is not secure in production
-      // Consider using contextBridge.exposeInMainWorld
-      // Read more on https://www.electronjs.org/docs/latest/tutorial/context-isolation
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: false,
@@ -55,18 +56,30 @@ export function createMainWindow() {
   sdkInstance = initIMSDK(mainWindow.webContents);
 
   if (process.env.VITE_DEV_SERVER_URL) {
-    // Open devTool if the app is not packaged
     mainWindow.loadURL(url);
   } else {
     mainWindow.loadFile(global.pathConfig.indexHtml);
   }
 
-  // Test actively push message to the Electron-Renderer
+  // 主窗口大小变化时，同步更新BrowserView布局
+  mainWindow.on("resize", () => {
+    if (workspaceView && mainWindow?.getBrowserViews().includes(workspaceView)) {
+      const newBounds = mainWindow.getContentBounds();
+      const updatedBounds = {
+        x: 0,
+        y: 0, // 若有顶部导航栏，可改为 64 等对应高度
+        width: newBounds.width,
+        height: newBounds.height,
+      };
+      workspaceView.setBounds(updatedBounds);
+      workspaceViewBounds = updatedBounds;
+    }
+  });
+
   mainWindow.webContents.on("did-finish-load", () => {
     mainWindow?.webContents.send("main-process-message", new Date().toLocaleString());
   });
 
-  // // Make all links open with the browser, not with the application
   mainWindow.webContents.setWindowOpenHandler(({ url, disposition }) => {
     console.log("windowOpenHandler:", { url, disposition });
     if (disposition === "foreground-tab" || disposition === "new-window") {
@@ -74,7 +87,6 @@ export function createMainWindow() {
       return { action: "deny" };
     }
 
-    // 其他链接在外部浏览器打开
     if (url.startsWith("https:") || url.startsWith("http:")) {
       shell.openExternal(url);
     }
@@ -92,6 +104,14 @@ export function createMainWindow() {
 
   mainWindow.on("close", (e) => {
     if (getIsForceQuit() || !mainWindow.isVisible()) {
+      // 主窗口关闭时，彻底销毁BrowserView释放资源
+      if (workspaceView) {
+        mainWindow.removeBrowserView(workspaceView);
+        // workspaceView.destroy(); // 销毁BrowserView实例（内部webContents自动销毁）
+        workspaceView = null;
+        workspaceViewBounds = null;
+        workspaceViewURL = null;
+      }
       mainWindow = null;
       destroyTray();
     } else {
@@ -102,10 +122,8 @@ export function createMainWindow() {
       mainWindow?.hide();
     }
   });
-  // 初始化截图功能
-  initScreenshots(mainWindow);
 
-  // 设置 workspaceView 相关的 IPC 处理函数
+  initScreenshots(mainWindow);
   setupWorkspaceViewHandlers();
   return mainWindow;
 }
@@ -243,7 +261,6 @@ export const toggleDevTools = () => {
 export const setFullScreen = (isFullscreen: boolean): boolean => {
   if (!mainWindow) return false;
   if (isLinux) {
-    // linux It needs to be resizable before it can be full screen
     if (isFullscreen) {
       mainWindow.setResizable(isFullscreen);
       mainWindow.setFullScreen(isFullscreen);
@@ -273,16 +290,20 @@ export const getWebContents = (): Electron.WebContents => {
   return mainWindow.webContents;
 };
 
-// 新增的
-// BrowserView 管理函数
+// BrowserView 管理函数（最终修正版）
 function setupWorkspaceViewHandlers() {
   // 创建或更新 BrowserView
   ipcMain.on("create-workspace-view", (event, { url, bounds }) => {
     if (!mainWindow) return;
 
+    // 保存位置和URL（用于隐藏后恢复）
+    workspaceViewBounds = bounds || mainWindow.getContentBounds();
+    workspaceViewURL = url;
+
     if (workspaceView) {
-      // 如果已存在,只更新 URL 和位置
-      workspaceView.setBounds(bounds);
+      // 已存在实例：更新配置并重新挂载（显示）
+      workspaceView.setBounds(workspaceViewBounds);
+      mainWindow.setBrowserView(workspaceView);
       if (workspaceView.webContents.getURL() !== url) {
         workspaceView.webContents.loadURL(url);
       }
@@ -294,13 +315,13 @@ function setupWorkspaceViewHandlers() {
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,
-        sandbox: false, // 允许完整的浏览器功能,支持 cookie
-        webSecurity: false, // 与主窗口保持一致
+        sandbox: false,
+        webSecurity: false,
       },
     });
 
     mainWindow.setBrowserView(workspaceView);
-    workspaceView.setBounds(bounds);
+    workspaceView.setBounds(workspaceViewBounds);
     workspaceView.setAutoResize({
       width: true,
       height: true,
@@ -310,37 +331,30 @@ function setupWorkspaceViewHandlers() {
 
     workspaceView.webContents.loadURL(url);
 
-    // 监听导航事件
-    workspaceView.webContents.on("did-navigate", () => {
+    // 监听导航事件，同步更新保存的URL
+    const updateNavigationState = () => {
       if (mainWindow && workspaceView) {
+        workspaceViewURL = workspaceView.webContents.getURL();
         mainWindow.webContents.send("workspace-navigation-changed", {
           canGoBack: workspaceView.webContents.canGoBack(),
           canGoForward: workspaceView.webContents.canGoForward(),
-          url: workspaceView.webContents.getURL(),
+          url: workspaceViewURL,
         });
       }
-    });
+    };
 
-    workspaceView.webContents.on("did-navigate-in-page", () => {
-      if (mainWindow && workspaceView) {
-        mainWindow.webContents.send("workspace-navigation-changed", {
-          canGoBack: workspaceView.webContents.canGoBack(),
-          canGoForward: workspaceView.webContents.canGoForward(),
-          url: workspaceView.webContents.getURL(),
-        });
-      }
-    });
+    workspaceView.webContents.on("did-navigate", updateNavigationState);
+    workspaceView.webContents.on("did-navigate-in-page", updateNavigationState);
 
     workspaceView.webContents.setWindowOpenHandler(({ url, disposition }) => {
       console.log("BrowserView windowOpenHandler:", { url, disposition });
 
       if (disposition === "foreground-tab" || disposition === "new-window") {
-        // 在当前 BrowserView 中打开
         workspaceView?.webContents.loadURL(url);
+        workspaceViewURL = url; // 同步更新URL
         return { action: "deny" };
       }
 
-      // 其他链接在外部浏览器打开
       if (url.startsWith("https:") || url.startsWith("http:")) {
         shell.openExternal(url);
       }
@@ -348,12 +362,15 @@ function setupWorkspaceViewHandlers() {
     });
   });
 
-  // 销毁 BrowserView
+  // 销毁 BrowserView（彻底释放资源）
   ipcMain.on("destroy-workspace-view", () => {
     if (workspaceView && mainWindow) {
       mainWindow.removeBrowserView(workspaceView);
-      // 移除这行: workspaceView.webContents.destroy();
-      workspaceView = null; // 只需要设置为 null
+      // workspaceView.destroy(); // 修正：销毁BrowserView实例（内部webContents自动销毁）
+      workspaceView = null;
+      workspaceViewBounds = null;
+      workspaceViewURL = null;
+      console.log("BrowserView 已彻底销毁");
     }
   });
 
@@ -375,6 +392,49 @@ function setupWorkspaceViewHandlers() {
   ipcMain.on("workspace-go-forward", () => {
     if (workspaceView && workspaceView.webContents.canGoForward()) {
       workspaceView.webContents.goForward();
+    }
+  });
+
+  // 隐藏BrowserView（不销毁实例，仅视觉隐藏）
+  ipcMain.on("hide-workspace-view", () => {
+    if (!workspaceView || !mainWindow) return;
+    mainWindow.removeBrowserView(workspaceView); // 从主窗口移除=隐藏
+    console.log("BrowserView 已隐藏，状态保留");
+  });
+
+  // 显示BrowserView（恢复实例和状态）
+  ipcMain.on("show-workspace-view", () => {
+    if (!workspaceView || !mainWindow || !workspaceViewBounds) return;
+    mainWindow.setBrowserView(workspaceView); // 重新挂载=显示
+    workspaceView.setBounds(workspaceViewBounds); // 恢复之前的位置大小
+    workspaceView.setAutoResize({
+      width: true,
+      height: true,
+      horizontal: true,
+      vertical: true,
+    });
+    console.log("BrowserView 已显示，当前URL:", workspaceViewURL);
+  });
+
+  // 切换显示/隐藏（一键切换）
+  ipcMain.on("toggle-workspace-view", () => {
+    if (!workspaceView || !mainWindow || !workspaceViewBounds) return;
+    // 判断当前是否显示（是否已挂载到主窗口）
+    const isVisible = mainWindow.getBrowserViews().includes(workspaceView);
+    
+    if (isVisible) {
+      mainWindow.removeBrowserView(workspaceView); // 显示→隐藏
+      console.log("BrowserView 已隐藏，状态保留");
+    } else {
+      mainWindow.setBrowserView(workspaceView); // 隐藏→显示
+      workspaceView.setBounds(workspaceViewBounds);
+      workspaceView.setAutoResize({
+        width: true,
+        height: true,
+        horizontal: true,
+        vertical: true,
+      });
+      console.log("BrowserView 已显示，当前URL:", workspaceViewURL);
     }
   });
 }

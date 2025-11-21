@@ -16,7 +16,7 @@ let workspaceView: BrowserView | null = null;
 // 保存BrowserView状态（位置、URL），用于隐藏后恢复
 let workspaceViewBounds: Electron.Rectangle | null = null;
 let workspaceViewURL: string | null = null;
-
+let workspaceHomeURL: string | null = null; // 新增：存储首页URL
 function createSplashWindow() {
   splashWindow = new BrowserWindow({
     frame: false,
@@ -299,7 +299,7 @@ function setupWorkspaceViewHandlers() {
     // 保存位置和URL（用于隐藏后恢复）
     workspaceViewBounds = bounds || mainWindow.getContentBounds();
     workspaceViewURL = url;
-
+    workspaceHomeURL = url; // 关键：保存初始URL作为首页
     if (workspaceView) {
       // 已存在实例：更新配置并重新挂载（显示）
       workspaceView.setBounds(workspaceViewBounds);
@@ -373,6 +373,15 @@ function setupWorkspaceViewHandlers() {
       console.log("BrowserView 已彻底销毁");
     }
   });
+  ipcMain.on("workspace-go-home", () => {
+    if (!workspaceView || !workspaceHomeURL) return;
+
+    // 跳转到首页URL
+    workspaceView.webContents.loadURL(workspaceHomeURL);
+    // 同步更新当前URL记录
+    workspaceViewURL = workspaceHomeURL;
+    console.log("BrowserView 已回到首页，URL:", workspaceHomeURL);
+  });
 
   // 刷新
   ipcMain.on("refresh-workspace-view", () => {
@@ -421,7 +430,7 @@ function setupWorkspaceViewHandlers() {
     if (!workspaceView || !mainWindow || !workspaceViewBounds) return;
     // 判断当前是否显示（是否已挂载到主窗口）
     const isVisible = mainWindow.getBrowserViews().includes(workspaceView);
-    
+
     if (isVisible) {
       mainWindow.removeBrowserView(workspaceView); // 显示→隐藏
       console.log("BrowserView 已隐藏，状态保留");

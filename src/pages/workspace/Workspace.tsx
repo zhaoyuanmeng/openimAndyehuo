@@ -79,6 +79,11 @@ export const Workspace = () => {
       window.electronAPI.refreshWorkspaceView();
     }
   };
+  const handleGoHome = () => {
+    if (window.electronAPI?.workspaceGoHome) {
+      window.electronAPI.workspaceGoHome();
+    }
+  };
 
   const handleOpenModal = () => {
     window.openWorkspace("http://www.chinaxiongan.cn/");
@@ -102,6 +107,9 @@ export const Workspace = () => {
   return (
     <div className="workspace-container" ref={containerRef}>
       <div className="workspace-toolbar">
+        <button onClick={handleGoHome} className="toolbar-btn">
+          回到首页
+        </button>
         <button onClick={handleRefresh} className="toolbar-btn">
           刷新
         </button>

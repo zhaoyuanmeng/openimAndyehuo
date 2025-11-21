@@ -131,7 +131,8 @@ const Api: IElectronAPI = {
   hideWorkspaceView: () => ipcRenderer.send("hide-workspace-view"),
   showWorkspaceView: () => ipcRenderer.send("show-workspace-view"),
   toggleWorkspaceView: () => ipcRenderer.send("toggle-workspace-view"),
-
+  // 新增：回到首页
+  workspaceGoHome: () => ipcRenderer.send("workspace-go-home"),
   refreshWorkspaceView: () => {
     ipcRenderer.send("refresh-workspace-view");
   },

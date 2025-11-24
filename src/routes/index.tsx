@@ -50,6 +50,13 @@ const router = createHashRouter([
               return { Component: WorkspacePage };
             },
           },
+          {
+            path: "Shoucang",
+            async lazy() {
+              const { Shoucang } = await import("@/pages/shoucang/index");
+              return { Component: Shoucang };
+            },
+          },
         ],
       },
       {

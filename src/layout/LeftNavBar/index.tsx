@@ -45,6 +45,12 @@ const NavList = [
     title: "工作台",
     path: "/WorkspacePage",
   },
+    {
+    icon: contact_icon,
+    icon_active: contact_icon_active,
+    title: "收藏",
+    path: "/Shoucang",
+  },
 ];
 
 i18n.on("languageChanged", () => {

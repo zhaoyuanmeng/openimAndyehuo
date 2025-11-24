@@ -27,6 +27,15 @@ const contactRoutes = [
       return { Component: NewFriends };
     },
   },
+  {
+    path: "organizationalStructure",
+    async lazy() {
+      const { organizationalStructure } = await import(
+        "@/pages/contact/organizationalStructure"
+      );
+      return { Component: organizationalStructure };
+    },
+  },
 ];
 
 export default contactRoutes;

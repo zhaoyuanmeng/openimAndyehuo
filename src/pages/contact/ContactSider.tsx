@@ -32,6 +32,11 @@ const Links = [
     icon: my_groups,
     path: "/contact/myGroups",
   },
+  {
+    label: "组织架构",
+    icon: my_groups,
+    path: "/contact/organizationalStructure",
+  },
 ];
 
 i18n.on("languageChanged", () => {
@@ -39,6 +44,7 @@ i18n.on("languageChanged", () => {
   Links[1].label = t("placeholder.groupNotification");
   Links[2].label = t("placeholder.myFriend");
   Links[3].label = t("placeholder.myGroup");
+  Links[4].label = "组织架构";
 });
 
 const ContactSider = () => {
@@ -60,6 +66,9 @@ const ContactSider = () => {
     }
     if (location.hash.includes("/contact/myGroups")) {
       setSelectIndex(3);
+    }
+     if (location.hash.includes("/contact/organizationalStructure")) {
+      setSelectIndex(4);
     }
   }, []);
 

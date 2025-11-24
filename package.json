@@ -100,6 +100,7 @@
     "i18next-fs-backend": "^2.2.0",
     "livekit-client": "2.7.0",
     "localforage": "^1.10.0",
+    "lucide-react": "^0.554.0",
     "md5": "^2.3.0",
     "mitt": "^3.0.0",
     "react-draggable": "^4.4.5",

@@ -30,10 +30,10 @@ const contactRoutes = [
   {
     path: "organizationalStructure",
     async lazy() {
-      const { organizationalStructure } = await import(
+      const { OrganizationalStructure } = await import(
         "@/pages/contact/organizationalStructure"
       );
-      return { Component: organizationalStructure };
+      return { Component: OrganizationalStructure };
     },
   },
 ];

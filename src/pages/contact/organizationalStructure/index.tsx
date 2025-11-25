@@ -44,9 +44,9 @@ export const OrganizationalStructure = () => {
 
   // 接口地址配置
   const API_CONFIG = {
-    deptTree: "http://172.17.165.136:8080/system/dept/treeList",
+    deptTree: "http://144.7.97.233:7080/openim-org/system/dept/treeList",
     deptUsers: (deptId: number) =>
-      `http://172.17.165.136:8080/system/dept/deptUserList/${deptId}`,
+      `http://144.7.97.233:7080/openim-org/system/dept/deptUserList/${deptId}`,
   };
 
   // 1. 获取部门树数据

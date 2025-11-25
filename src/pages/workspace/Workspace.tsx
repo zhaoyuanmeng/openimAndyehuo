@@ -51,6 +51,19 @@ export const Workspace = () => {
       }
     };
 
+    const handleWindowResized = () => {
+      const newBounds = calculateBounds();
+      if (newBounds && window.electronAPI?.updateWorkspaceViewBounds) {
+        window.electronAPI.updateWorkspaceViewBounds(newBounds);
+      }
+    };
+
+    if (window.electronAPI?.onWorkspaceWindowResized) {
+      const unsubscribe =
+        window.electronAPI.onWorkspaceWindowResized(handleWindowResized);
+      return unsubscribe;
+    }
+
     window.addEventListener("resize", handleResize);
 
     // 清理
@@ -61,7 +74,14 @@ export const Workspace = () => {
       }
     };
   }, []);
-
+  useEffect(() => {
+    return () => {
+      // 组件失活时(切换到其他路由时)隐藏 BrowserView
+      if (window.electronAPI?.hideWorkspaceView) {
+        window.electronAPI.hideWorkspaceView();
+      }
+    };
+  }, []);
   const handleGoBack = () => {
     if (window.electronAPI?.workspaceGoBack) {
       window.electronAPI.workspaceGoBack();

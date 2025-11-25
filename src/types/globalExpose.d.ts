@@ -15,7 +15,14 @@ export interface IElectronAPI {
   saveFileToDisk: (params: { file: File; sync?: boolean }) => Promise<string>;
   getFileByPath: (filePath: string) => Promise<{ file: File; path: string } | null>;
   startScreenshot: (hideWindow?: boolean) => Promise<void>; // 新增
-
+  // ... 现有的接口
+  updateWorkspaceViewBounds?: (bounds: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  }) => void;
+  onWorkspaceWindowResized?: (callback: () => void) => () => void;
   // 新增 BrowserView 相关类型
   createWorkspaceView: (
     url: string,
@@ -43,10 +50,10 @@ export interface IElectronAPI {
   ) => () => void;
 
   // modal
-   // 新增Modal Workspace相关方法
+  // 新增Modal Workspace相关方法
   createModalWorkspaceView: (
     url: string,
-    bounds: { x: number; y: number; width: number; height: number }
+    bounds: { x: number; y: number; width: number; height: number },
   ) => void;
   destroyModalWorkspaceView: () => void;
   hideModalWorkspaceView: () => void;
@@ -57,7 +64,7 @@ export interface IElectronAPI {
   modalWorkspaceGoBack: () => void;
   modalWorkspaceGoForward: () => void;
   onModalWorkspaceNavigationChanged: (
-    callback: (data: WorkspaceNavigationState) => void
+    callback: (data: WorkspaceNavigationState) => void,
   ) => () => void;
 }
 

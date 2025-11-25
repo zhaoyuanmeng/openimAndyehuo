@@ -124,7 +124,12 @@ const Api: IElectronAPI = {
   ) => {
     ipcRenderer.send("create-workspace-view", { url, bounds });
   },
-
+  updateWorkspaceViewBounds: (bounds) => {  
+    ipcRenderer.send('update-workspace-view-bounds', bounds);  
+  },  
+  onWorkspaceWindowResized: (callback) => {  
+    return subscribe('workspace-window-resized', callback);  
+  },  
   destroyWorkspaceView: () => {
     ipcRenderer.send("destroy-workspace-view");
   },

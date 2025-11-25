@@ -1,4 +1,4 @@
-import { BrowserWindow, Menu, app, dialog, ipcMain } from "electron";
+import { BrowserWindow, Menu, app, dialog, ipcMain, shell } from "electron";
 import {
   clearCache,
   closeWindow,
@@ -11,8 +11,8 @@ import { t } from "i18next";
 import { IpcRenderToMain } from "../constants";
 import { getStore } from "./storeManage";
 import { changeLanguage } from "../i18n";
-import { writeFileSync } from 'fs';  
-import axios from 'axios';  
+import { writeFileSync } from "fs";
+import axios from "axios";
 const store = getStore();
 
 export const setIpcMainListener = () => {
@@ -100,33 +100,42 @@ export const setIpcMainListener = () => {
         break;
     }
   });
+  ipcMain.handle("openFolder", async (_, folderPath: string) => {
+    try {
+      // 调用系统默认文件管理器打开文件夹
+      await shell.openPath(folderPath);
+    } catch (error) {
+      console.error("打开文件夹失败", error);
+      throw error;
+    }
+  });
 
-  ipcMain.handle('save-image', async (event, { url, filename }) => {  
-  try {  
-    // 显示保存对话框  
-    const { filePath, canceled } = await dialog.showSaveDialog({  
-      title: '保存图片',  
-      defaultPath: filename,  
-      filters: [  
-        { name: '图片文件', extensions: ['png', 'jpg', 'jpeg', 'webp'] },  
-        { name: '所有文件', extensions: ['*'] }  
-      ]  
-    });  
-  
-    // 用户取消了保存  
-    if (canceled || !filePath) {  
-      return null;  
-    }  
-  
-    // 下载图片并保存  
-    const response = await axios.get(url, { responseType: 'arraybuffer' });  
-    writeFileSync(filePath, Buffer.from(response.data));  
-      
-    // 返回保存的文件路径表示成功  
-    return filePath;  
-  } catch (error) {  
-    console.error('保存图片失败:', error);  
-    throw error;  
-  }  
-});
+  ipcMain.handle("save-image", async (event, { url, filename }) => {
+    try {
+      // 显示保存对话框
+      const { filePath, canceled } = await dialog.showSaveDialog({
+        title: "保存图片",
+        defaultPath: filename,
+        filters: [
+          { name: "图片文件", extensions: ["png", "jpg", "jpeg", "webp"] },
+          { name: "所有文件", extensions: ["*"] },
+        ],
+      });
+
+      // 用户取消了保存
+      if (canceled || !filePath) {
+        return null;
+      }
+
+      // 下载图片并保存
+      const response = await axios.get(url, { responseType: "arraybuffer" });
+      writeFileSync(filePath, Buffer.from(response.data));
+
+      // 返回保存的文件路径表示成功
+      return filePath;
+    } catch (error) {
+      console.error("保存图片失败:", error);
+      throw error;
+    }
+  });
 };

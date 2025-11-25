@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import "./workspace.scss";
 
 export const Workspace = () => {
@@ -6,29 +7,30 @@ export const Workspace = () => {
   const [canGoBack, setCanGoBack] = useState(false);
   const [canGoForward, setCanGoForward] = useState(false);
   const [currentUrl, setCurrentUrl] = useState("");
+  const location = useLocation();
 
   const workspaceUrl = "http://144.7.97.233:7080/";
 
+  // 计算工具栏高度,为 BrowserView 预留空间
+  const calculateBounds = () => {
+    if (!containerRef.current) return;
+
+    const toolbar = containerRef.current.querySelector(".workspace-toolbar");
+    const toolbarHeight = toolbar?.clientHeight || 40;
+    const rect = containerRef.current.getBoundingClientRect();
+
+    return {
+      x: Math.round(rect.x),
+      y: Math.round(rect.y + toolbarHeight),
+      width: Math.round(rect.width),
+      height: Math.round(rect.height - toolbarHeight),
+    };
+  };
+
+  // 只在首次挂载时初始化
   useEffect(() => {
     setCurrentUrl(workspaceUrl);
 
-    // 计算工具栏高度,为 BrowserView 预留空间
-    const calculateBounds = () => {
-      if (!containerRef.current) return;
-
-      const toolbar = containerRef.current.querySelector(".workspace-toolbar");
-      const toolbarHeight = toolbar?.clientHeight || 40;
-      const rect = containerRef.current.getBoundingClientRect();
-
-      return {
-        x: Math.round(rect.x),
-        y: Math.round(rect.y + toolbarHeight),
-        width: Math.round(rect.width),
-        height: Math.round(rect.height - toolbarHeight),
-      };
-    };
-
-    // 创建 BrowserView
     const bounds = calculateBounds();
     if (bounds && window.electronAPI?.createWorkspaceView) {
       window.electronAPI.createWorkspaceView(workspaceUrl, bounds);
@@ -43,14 +45,7 @@ export const Workspace = () => {
       });
     }
 
-    // 监听窗口大小变化,更新 BrowserView 位置
-    const handleResize = () => {
-      const newBounds = calculateBounds();
-      if (newBounds && window.electronAPI?.createWorkspaceView) {
-        window.electronAPI.createWorkspaceView(currentUrl, newBounds);
-      }
-    };
-
+    // 监听窗口调整大小事件
     const handleWindowResized = () => {
       const newBounds = calculateBounds();
       if (newBounds && window.electronAPI?.updateWorkspaceViewBounds) {
@@ -58,30 +53,54 @@ export const Workspace = () => {
       }
     };
 
+    let unsubscribeResize: (() => void) | undefined;
     if (window.electronAPI?.onWorkspaceWindowResized) {
-      const unsubscribe =
+      unsubscribeResize =
         window.electronAPI.onWorkspaceWindowResized(handleWindowResized);
-      return unsubscribe;
     }
 
-    window.addEventListener("resize", handleResize);
-
-    // 清理
     return () => {
-      window.removeEventListener("resize", handleResize);
-      if (window.electronAPI?.destroyWorkspaceView) {
-        window.electronAPI.destroyWorkspaceView();
+      if (unsubscribeResize) {
+        unsubscribeResize();
       }
     };
   }, []);
+
+  // 监听路由变化,控制 BrowserView 显示/隐藏
   useEffect(() => {
-    return () => {
-      // 组件失活时(切换到其他路由时)隐藏 BrowserView
+    // 检查当前路由是否是 Workspace
+    const isWorkspaceRoute = location.pathname.includes("/WorkspacePage");
+
+    if (isWorkspaceRoute) {
+      // 显示 BrowserView
+      const bounds = calculateBounds();
+      if (bounds && window.electronAPI?.showWorkspaceView) {
+        window.electronAPI.showWorkspaceView(bounds);
+      }
+    } else {
+      // 隐藏 BrowserView
       if (window.electronAPI?.hideWorkspaceView) {
         window.electronAPI.hideWorkspaceView();
       }
+    }
+  }, [location.pathname]);
+
+  // 监听 workspace-open-url 事件
+  useEffect(() => {
+    const handleWorkspaceOpenUrl = (data: { url: string }) => {
+      console.log("workspace-open-url---", data.url);
+      window.openWorkspace(data.url);
     };
+
+    if (window.electronAPI?.subscribe) {
+      const unsubscribe = window.electronAPI.subscribe(
+        "workspace-open-url",
+        handleWorkspaceOpenUrl,
+      );
+      return unsubscribe;
+    }
   }, []);
+
   const handleGoBack = () => {
     if (window.electronAPI?.workspaceGoBack) {
       window.electronAPI.workspaceGoBack();
@@ -99,30 +118,12 @@ export const Workspace = () => {
       window.electronAPI.refreshWorkspaceView();
     }
   };
+
   const handleGoHome = () => {
     if (window.electronAPI?.workspaceGoHome) {
       window.electronAPI.workspaceGoHome();
     }
   };
-
-  const handleOpenModal = () => {
-    window.openWorkspace("http://www.chinaxiongan.cn/");
-  };
-
-  useEffect(() => {
-    const handleWorkspaceOpenUrl = (data: { url: string }) => {
-      console.log("workspace-open-url---", data.url);
-      window.openWorkspace(data.url);
-    };
-
-    if (window.electronAPI?.subscribe) {
-      const unsubscribe = window.electronAPI.subscribe(
-        "workspace-open-url",
-        handleWorkspaceOpenUrl,
-      );
-      return unsubscribe;
-    }
-  }, []);
 
   return (
     <div className="workspace-container" ref={containerRef}>
@@ -144,7 +145,6 @@ export const Workspace = () => {
           前进 →
         </button>
       </div>
-      {/* BrowserView 会覆盖这个区域,这里只是占位 */}
       <div className="workspace-content" style={{ flex: 1 }} />
     </div>
   );

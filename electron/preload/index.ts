@@ -124,17 +124,20 @@ const Api: IElectronAPI = {
   ) => {
     ipcRenderer.send("create-workspace-view", { url, bounds });
   },
-  updateWorkspaceViewBounds: (bounds) => {  
-    ipcRenderer.send('update-workspace-view-bounds', bounds);  
-  },  
-  onWorkspaceWindowResized: (callback) => {  
-    return subscribe('workspace-window-resized', callback);  
-  },  
+  updateWorkspaceViewBounds: (bounds) => {
+    ipcRenderer.send("update-workspace-view-bounds", bounds);
+  },
+  onWorkspaceWindowResized: (callback) => {
+    return subscribe("workspace-window-resized", callback);
+  },
   destroyWorkspaceView: () => {
     ipcRenderer.send("destroy-workspace-view");
   },
   hideWorkspaceView: () => ipcRenderer.send("hide-workspace-view"),
-  showWorkspaceView: () => ipcRenderer.send("show-workspace-view"),
+  showWorkspaceView: (bounds) => {
+    ipcRenderer.send("show-workspace-view", bounds);
+  },
+  // showWorkspaceView: () => ipcRenderer.send("show-workspace-view"),
   toggleWorkspaceView: () => ipcRenderer.send("toggle-workspace-view"),
   // 新增：回到首页
   workspaceGoHome: () => ipcRenderer.send("workspace-go-home"),

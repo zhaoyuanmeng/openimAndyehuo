@@ -457,195 +457,196 @@ export const getWebContents = (): Electron.WebContents => {
 //   });
 // }
 
-function setupWorkspaceViewHandlers() {  
-  // 存储事件监听器引用,用于清理  
-  let moveListener: (() => void) | null = null;  
-  let resizeListener: (() => void) | null = null;  
-  
-  // 创建或更新 BrowserView  
-  ipcMain.on("create-workspace-view", (event, { url, bounds }) => {  
-    if (!mainWindow) return;  
-  
-    // 保存位置和URL  
-    workspaceViewBounds = bounds || mainWindow.getContentBounds();  
-    workspaceViewURL = url;  
-    workspaceHomeURL = url;  
-  
-    if (workspaceView) {  
-      // 已存在实例:更新配置并重新挂载  
-      workspaceView.setBounds(workspaceViewBounds);  
-      mainWindow.setBrowserView(workspaceView);  
-      if (workspaceView.webContents.getURL() !== url) {  
-        workspaceView.webContents.loadURL(url);  
-      }  
-      return;  
-    }  
-  
-    // 创建新的 BrowserView  
-    workspaceView = new BrowserView({  
-      webPreferences: {  
-        nodeIntegration: false,  
-        contextIsolation: true,  
-        sandbox: false,  
-        webSecurity: false,  
-      },  
-    });  
-  
-    mainWindow.setBrowserView(workspaceView);  
-    workspaceView.setBounds(workspaceViewBounds);  
-    workspaceView.setAutoResize({  
-      width: true,  
-      height: true,  
-      horizontal: true,  
-      vertical: true,  
-    });  
-  
-    workspaceView.webContents.loadURL(url);  
-  
-    // 监听导航事件  
-    const updateNavigationState = () => {  
-      if (mainWindow && workspaceView) {  
-        workspaceViewURL = workspaceView.webContents.getURL();  
-        mainWindow.webContents.send("workspace-navigation-changed", {  
-          canGoBack: workspaceView.webContents.canGoBack(),  
-          canGoForward: workspaceView.webContents.canGoForward(),  
-          url: workspaceViewURL,  
-        });  
-      }  
-    };  
-  
-    workspaceView.webContents.on("did-navigate", updateNavigationState);  
-    workspaceView.webContents.on("did-navigate-in-page", updateNavigationState);  
-  
-    // 关键修改:监听窗口移动和调整大小事件  
-    moveListener = () => {  
-      if (workspaceView && !workspaceView.webContents.isDestroyed() && workspaceViewBounds) {  
-        // 窗口移动时,BrowserView 的相对位置保持不变  
-        // 但需要确保 bounds 是最新的  
-        workspaceView.setBounds(workspaceViewBounds);  
-      }  
-    };  
-  
-    resizeListener = () => {  
-      if (workspaceView && !workspaceView.webContents.isDestroyed()) {  
-        // 窗口调整大小时,通知渲染进程重新计算 bounds  
-        mainWindow.webContents.send("workspace-window-resized");  
-      }  
-    };  
-  
-    mainWindow.on("move", moveListener);  
-    mainWindow.on("resize", resizeListener);  
-  
-    workspaceView.webContents.setWindowOpenHandler(({ url, disposition }) => {  
-      console.log("BrowserView windowOpenHandler:", { url, disposition });  
-  
-      if (disposition === "foreground-tab" || disposition === "new-window") {  
-        workspaceView?.webContents.loadURL(url);  
-        workspaceViewURL = url;  
-        return { action: "deny" };  
-      }  
-  
-      if (url.startsWith("https:") || url.startsWith("http:")) {  
-        shell.openExternal(url);  
-      }  
-      return { action: "deny" };  
-    });  
-  });  
-  
-  // 更新 BrowserView 边界(从渲染进程调用)  
-  ipcMain.on("update-workspace-view-bounds", (event, bounds) => {  
-    if (workspaceView && mainWindow) {  
-      workspaceViewBounds = bounds;  
-      workspaceView.setBounds(bounds);  
-    }  
-  });  
-  
-  // 销毁 BrowserView  
-  ipcMain.on("destroy-workspace-view", () => {  
-    if (workspaceView && mainWindow) {  
-      // 清理事件监听器  
-      if (moveListener) {  
-        mainWindow.removeListener("move", moveListener);  
-        moveListener = null;  
-      }  
-      if (resizeListener) {  
-        mainWindow.removeListener("resize", resizeListener);  
-        resizeListener = null;  
-      }  
-  
-      mainWindow.removeBrowserView(workspaceView);  
-      workspaceView = null;  
-      workspaceViewBounds = null;  
-      workspaceViewURL = null;  
-      workspaceHomeURL = null;  
-      console.log("BrowserView 已彻底销毁");  
-    }  
-  });  
-  
-  // 其他处理器保持不变  
-  ipcMain.on("workspace-go-home", () => {  
-    if (!workspaceView || !workspaceHomeURL) return;  
-    workspaceView.webContents.loadURL(workspaceHomeURL);  
-    workspaceViewURL = workspaceHomeURL;  
-    console.log("BrowserView 已回到首页，URL:", workspaceHomeURL);  
-  });  
-  
-  ipcMain.on("refresh-workspace-view", () => {  
-    if (workspaceView) {  
-      workspaceView.webContents.reload();  
-    }  
-  });  
-  
-  ipcMain.on("workspace-go-back", () => {  
-    if (workspaceView && workspaceView.webContents.canGoBack()) {  
-      workspaceView.webContents.goBack();  
-    }  
-  });  
-  
-  ipcMain.on("workspace-go-forward", () => {  
-    if (workspaceView && workspaceView.webContents.canGoForward()) {  
-      workspaceView.webContents.goForward();  
-    }  
-  });  
-  
-  ipcMain.on("hide-workspace-view", () => {  
-    if (!workspaceView || !mainWindow) return;  
-    mainWindow.removeBrowserView(workspaceView);  
-    console.log("BrowserView 已隐藏，状态保留");  
-  });  
-  
-  ipcMain.on("show-workspace-view", () => {  
-    if (!workspaceView || !mainWindow || !workspaceViewBounds) return;  
-    mainWindow.setBrowserView(workspaceView);  
-    workspaceView.setBounds(workspaceViewBounds);  
-    workspaceView.setAutoResize({  
-      width: true,  
-      height: true,  
-      horizontal: true,  
-      vertical: true,  
-    });  
-    console.log("BrowserView 已显示，当前URL:", workspaceViewURL);  
-  });  
-  
-  ipcMain.on("toggle-workspace-view", () => {  
-    if (!workspaceView || !mainWindow || !workspaceViewBounds) return;  
-    const isVisible = mainWindow.getBrowserViews().includes(workspaceView);  
-  
-    if (isVisible) {  
-      mainWindow.removeBrowserView(workspaceView);  
-      console.log("BrowserView 已隐藏，状态保留");  
-    } else {  
-      mainWindow.setBrowserView(workspaceView);  
-      workspaceView.setBounds(workspaceViewBounds);  
-      workspaceView.setAutoResize({  
-        width: true,  
-        height: true,  
-        horizontal: true,  
-        vertical: true,  
-      });  
-      console.log("BrowserView 已显示，当前URL:", workspaceViewURL);  
-    }  
-  });  
+function setupWorkspaceViewHandlers() {
+  let moveListener: (() => void) | null = null;
+  let resizeListener: (() => void) | null = null;
+
+  ipcMain.on("create-workspace-view", (event, { url, bounds }) => {
+    if (!mainWindow) return;
+
+    workspaceViewBounds = bounds || mainWindow.getContentBounds();
+    workspaceViewURL = url;
+    workspaceHomeURL = url;
+
+    if (workspaceView) {
+      workspaceView.setBounds(workspaceViewBounds);
+      mainWindow.setBrowserView(workspaceView);
+      if (workspaceView.webContents.getURL() !== url) {
+        workspaceView.webContents.loadURL(url);
+      }
+      return;
+    }
+
+    workspaceView = new BrowserView({
+      webPreferences: {
+        nodeIntegration: false,
+        contextIsolation: true,
+        sandbox: false,
+        webSecurity: false,
+      },
+    });
+
+    mainWindow.setBrowserView(workspaceView);
+    workspaceView.setBounds(workspaceViewBounds);
+    workspaceView.setAutoResize({
+      width: true,
+      height: true,
+      horizontal: true,
+      vertical: true,
+    });
+
+    workspaceView.webContents.loadURL(url);
+
+    const updateNavigationState = () => {
+      if (mainWindow && workspaceView) {
+        workspaceViewURL = workspaceView.webContents.getURL();
+        mainWindow.webContents.send("workspace-navigation-changed", {
+          canGoBack: workspaceView.webContents.canGoBack(),
+          canGoForward: workspaceView.webContents.canGoForward(),
+          url: workspaceViewURL,
+        });
+      }
+    };
+
+    workspaceView.webContents.on("did-navigate", updateNavigationState);
+    workspaceView.webContents.on("did-navigate-in-page", updateNavigationState);
+
+    moveListener = () => {
+      if (
+        workspaceView &&
+        !workspaceView.webContents.isDestroyed() &&
+        workspaceViewBounds
+      ) {
+        workspaceView.setBounds(workspaceViewBounds);
+      }
+    };
+
+    resizeListener = () => {
+      if (workspaceView && !workspaceView.webContents.isDestroyed()) {
+        mainWindow.webContents.send("workspace-window-resized");
+      }
+    };
+
+    mainWindow.on("move", moveListener);
+    mainWindow.on("resize", resizeListener);
+
+    workspaceView.webContents.setWindowOpenHandler(({ url, disposition }) => {
+      console.log("BrowserView windowOpenHandler:", { url, disposition });
+
+      if (disposition === "foreground-tab" || disposition === "new-window") {
+        workspaceView?.webContents.loadURL(url);
+        workspaceViewURL = url;
+        return { action: "deny" };
+      }
+
+      if (url.startsWith("https:") || url.startsWith("http:")) {
+        shell.openExternal(url);
+      }
+      return { action: "deny" };
+    });
+  });
+
+  ipcMain.on("update-workspace-view-bounds", (event, bounds) => {
+    if (workspaceView && mainWindow) {
+      workspaceViewBounds = bounds;
+      workspaceView.setBounds(bounds);
+    }
+  });
+
+  ipcMain.on("destroy-workspace-view", () => {
+    if (workspaceView && mainWindow) {
+      if (moveListener) {
+        mainWindow.removeListener("move", moveListener);
+        moveListener = null;
+      }
+      if (resizeListener) {
+        mainWindow.removeListener("resize", resizeListener);
+        resizeListener = null;
+      }
+
+      mainWindow.removeBrowserView(workspaceView);
+      workspaceView = null;
+      workspaceViewBounds = null;
+      workspaceViewURL = null;
+      workspaceHomeURL = null;
+      console.log("BrowserView 已彻底销毁");
+    }
+  });
+
+  ipcMain.on("workspace-go-home", () => {
+    if (!workspaceView || !workspaceHomeURL) return;
+    workspaceView.webContents.loadURL(workspaceHomeURL);
+    workspaceViewURL = workspaceHomeURL;
+    console.log("BrowserView 已回到首页，URL:", workspaceHomeURL);
+  });
+
+  ipcMain.on("refresh-workspace-view", () => {
+    if (workspaceView) {
+      workspaceView.webContents.reload();
+    }
+  });
+
+  ipcMain.on("workspace-go-back", () => {
+    if (workspaceView && workspaceView.webContents.canGoBack()) {
+      workspaceView.webContents.goBack();
+    }
+  });
+
+  ipcMain.on("workspace-go-forward", () => {
+    if (workspaceView && workspaceView.webContents.canGoForward()) {
+      workspaceView.webContents.goForward();
+    }
+  });
+
+  ipcMain.on("hide-workspace-view", () => {
+    if (!workspaceView || !mainWindow) return;
+    mainWindow.removeBrowserView(workspaceView);
+    console.log("BrowserView 已隐藏，状态保留");
+  });
+
+  // 关键修改:接收可选的 bounds 参数
+  ipcMain.on("show-workspace-view", (event, bounds) => {
+    if (!workspaceView || !mainWindow) return;
+
+    // 如果提供了新的边界,使用新边界
+    if (bounds) {
+      workspaceViewBounds = bounds;
+    }
+
+    // 确保使用最新的边界
+    if (workspaceViewBounds) {
+      workspaceView.setBounds(workspaceViewBounds);
+    }
+
+    mainWindow.setBrowserView(workspaceView);
+    workspaceView.setAutoResize({
+      width: true,
+      height: true,
+      horizontal: true,
+      vertical: true,
+    });
+    console.log("BrowserView 已显示，当前URL:", workspaceViewURL);
+  });
+
+  ipcMain.on("toggle-workspace-view", () => {
+    if (!workspaceView || !mainWindow || !workspaceViewBounds) return;
+    const isVisible = mainWindow.getBrowserViews().includes(workspaceView);
+
+    if (isVisible) {
+      mainWindow.removeBrowserView(workspaceView);
+      console.log("BrowserView 已隐藏，状态保留");
+    } else {
+      mainWindow.setBrowserView(workspaceView);
+      workspaceView.setBounds(workspaceViewBounds);
+      workspaceView.setAutoResize({
+        width: true,
+        height: true,
+        horizontal: true,
+        vertical: true,
+      });
+      console.log("BrowserView 已显示，当前URL:", workspaceViewURL);
+    }
+  });
 }
 
 function setupWorkspaceModalViewHandlers() {

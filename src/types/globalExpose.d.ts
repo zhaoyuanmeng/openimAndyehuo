@@ -37,7 +37,7 @@ export interface IElectronAPI {
   hideWorkspaceView: () => void;
   /** 显示工作台（恢复之前的实例和状态） */
   showWorkspaceView: (any) => void;
-  
+
   /** 回到工作台首页（跳转到初始创建时的URL） */
   workspaceGoHome: () => void;
   /** 切换工作台显示/隐藏状态 */
@@ -77,6 +77,11 @@ declare global {
     screenshotPreview: (results: string) => void;
 
     openWorkspace?: (url: any) => any;
+
+    createFavorite: (...args: any[]) => Promise<boolean>;
+    listFavorite: (...args: any[]) => Promise<{ list: FavoriteItem[]; total: number }>;
+    deleteFavorite: (...args: any[]) => Promise<number>;
+
   }
 }
 

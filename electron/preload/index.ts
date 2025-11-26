@@ -201,5 +201,4 @@ const Api: IElectronAPI = {
       ipcRenderer.removeListener("modal-workspace-navigation-changed", subscription);
   },
 };
-
 contextBridge.exposeInMainWorld("electronAPI", Api);

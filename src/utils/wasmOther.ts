@@ -1,12 +1,19 @@
 // wasm/favoriteWasm.ts
 // 关键：告诉 TS window 上有这3个函数（解决类型报错）
-declare global {
-  interface Window {
-    createFavorite: (...args: any[]) => Promise<boolean>;
-    listFavorite: (...args: any[]) => Promise<{ list: FavoriteItem[]; total: number }>;
-    deleteFavorite: (...args: any[]) => Promise<number>;
-  }
-}
+// declare global {
+//   interface Window {
+//     createFavorite: (...args: any[]) => Promise<boolean>;
+//     listFavorite: (...args: any[]) => Promise<{ list: FavoriteItem[]; total: number }>;
+//     deleteFavorite: (...args: any[]) => Promise<number>;
+
+//     // Electron环境
+//     favoriteWasm?: {
+//       createFavorite: (...args: any[]) => Promise<boolean>;
+//       listFavorite: (...args: any[]) => Promise<{ list: FavoriteItem[]; total: number }>;
+//       deleteFavorite: (...args: any[]) => Promise<number>;
+//     };
+//   }
+// }
 
 // 1. 定义必要的简单类型（对应Go端结构体，按需调整字段）
 export type MsgData = {
@@ -43,6 +50,9 @@ export type FavoriteItem = {
 /**
  * 创建收藏
  */
+/**
+ * 创建收藏
+ */
 export const createFavorite = async (
   userID: string,
   conversationID: string,
@@ -50,22 +60,14 @@ export const createFavorite = async (
   serverMsgID: string,
   seq: number,
   msgData: MsgData,
-  remark: string
+  remark: string,
 ): Promise<boolean> => {
-  // 简单校验函数是否存在
-  if (typeof window.createFavorite !== 'function') {
-    throw new Error('WASM未暴露createFavorite函数');
+  // 优先使用Electron环境暴露的函数，回退到浏览器环境
+  const fn = window.createFavorite;
+  if (typeof fn !== "function") {
+    throw new Error("WASM未暴露createFavorite函数");
   }
-  // 直接调用window上的函数，返回Promise
-  return window.createFavorite(
-    userID,
-    conversationID,
-    clientMsgID,
-    serverMsgID,
-    seq,
-    msgData,
-    remark
-  );
+  return fn(userID, conversationID, clientMsgID, serverMsgID, seq, msgData, remark);
 };
 
 /**
@@ -76,18 +78,13 @@ export const listFavorite = async (
   pagination: RequestPagination,
   sessionTypes: number[],
   startTime: number,
-  endTime: number
+  endTime: number,
 ): Promise<{ list: FavoriteItem[]; total: number }> => {
-  if (typeof window.listFavorite !== 'function') {
-    throw new Error('WASM未暴露listFavorite函数');
+  const fn = window.listFavorite;
+  if (typeof fn !== "function") {
+    throw new Error("WASM未暴露listFavorite函数");
   }
-  return window.listFavorite(
-    userID,
-    pagination,
-    sessionTypes,
-    startTime,
-    endTime
-  );
+  return fn(userID, pagination, sessionTypes, startTime, endTime);
 };
 
 /**
@@ -95,10 +92,11 @@ export const listFavorite = async (
  */
 export const deleteFavorite = async (
   userID: string,
-  favoriteIDs: string[]
+  favoriteIDs: string[],
 ): Promise<number> => {
-  if (typeof window.deleteFavorite !== 'function') {
-    throw new Error('WASM未暴露deleteFavorite函数');
+  const fn = window.deleteFavorite;
+  if (typeof fn !== "function") {
+    throw new Error("WASM未暴露deleteFavorite函数");
   }
-  return window.deleteFavorite(userID, favoriteIDs);
+  return fn(userID, favoriteIDs);
 };

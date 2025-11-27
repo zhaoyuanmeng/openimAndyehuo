@@ -29,8 +29,8 @@ export type MsgData = {
 };
 
 export type RequestPagination = {
-  page: number;
-  pageSize: number;
+  pageNumber: number;
+  showNumber: number;
   total?: number; // 可选，Go端返回时赋值
 };
 
@@ -74,9 +74,11 @@ export const createFavorite = async (
  * 列出收藏
  */
 export const listFavorite = async (
-  userID: string,
-  pagination: RequestPagination,
-  sessionTypes: number[],
+  operationID: string,
+  // pagination: RequestPagination,
+  pageNumber: number,
+  showNumber: number,
+  sessionTypes: any,
   startTime: number,
   endTime: number,
 ): Promise<{ list: FavoriteItem[]; total: number }> => {
@@ -84,7 +86,7 @@ export const listFavorite = async (
   if (typeof fn !== "function") {
     throw new Error("WASM未暴露listFavorite函数");
   }
-  return fn(userID, pagination, sessionTypes, startTime, endTime);
+  return fn(operationID, pageNumber, showNumber, sessionTypes, startTime, endTime);
 };
 
 /**

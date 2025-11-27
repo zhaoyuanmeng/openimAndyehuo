@@ -11,9 +11,9 @@ export const Shoucang = () => {
     setCategory(newCategory);
   };
 
-  const handelClick = async() => {
-    let res = await listFavorite("user123", { page: 1, pageSize: 10 }, [], 0, Date.now());
-    console.log("全部收藏被点击");
+  const handelClick = async () => {
+    let res = await listFavorite("3351002245", 1, 20, [1], 0, 2);
+    console.log("全部收藏被点击", res);
   };
 
   return (

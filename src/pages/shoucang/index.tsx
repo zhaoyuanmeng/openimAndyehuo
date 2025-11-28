@@ -12,7 +12,16 @@ export const Shoucang = () => {
   };
 
   const handelClick = async () => {
-    let res = await listFavorite("3351002245", 1, 20, JSON.stringify([1]), 0, 2);
+    let res = await listFavorite(
+      "3351002245",
+      JSON.stringify({
+        pageNumber: 1,
+        showNumber: 20,
+      }),
+      JSON.stringify([1]),
+      0,
+      2,
+    );
     console.log("全部收藏被点击", res);
   };
 

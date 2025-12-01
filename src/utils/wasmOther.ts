@@ -54,7 +54,9 @@ export const listFavorite = async (
   sessionTypes: any,
   startTime: number,
   endTime: number,
-): Promise<{ list: FavoriteItem[]; total: number }> => {
+): Promise<{
+  favorites: any; list: FavoriteItem[]; total: number 
+}> => {
   const fn = window.listFavorite;
   if (typeof fn !== "function") {
     throw new Error("WASM未暴露listFavorite函数");

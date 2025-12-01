@@ -1,6 +1,6 @@
 import { MessageItem as MessageItemType, MessageType } from "@openim/wasm-client-sdk";
 import clsx from "clsx";
-import { FC, memo, useCallback, useRef, useState } from "react";
+import { FC, memo, useCallback, useRef, useState, useEffect } from "react";
 import { Avatar } from "antd";
 import { useTranslation } from "react-i18next";
 
@@ -14,7 +14,9 @@ import styles from "./message-item.module.scss";
 import MessageItemErrorBoundary from "./MessageItemErrorBoundary";
 import MessageSuffix from "./MessageSuffix";
 import TextMessageRender from "./TextMessageRender";
-
+import MessageMenu from "./MessageMenu";
+import { createFavorite } from "@/utils/wasmOther";
+import { feedbackToast } from "@/utils/common";
 export interface IMessageItemProps {
   message: MessageItemType;
   isSender: boolean;
@@ -37,6 +39,7 @@ const MessageItem: FC<IMessageItemProps> = ({
   const messageWrapRef = useRef<HTMLDivElement>(null);
   const [showMessageMenu, setShowMessageMenu] = useState(false);
   const [isReadPanelExpanded, setIsReadPanelExpanded] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
   const { t } = useTranslation();
   const MessageRenderComponent = components[message.contentType] || CatchMessageRender;
 
@@ -45,6 +48,85 @@ const MessageItem: FC<IMessageItemProps> = ({
   }, []);
 
   const canShowMessageMenu = !disabled;
+
+  // 右键菜单处理
+  const handleContextMenu = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      if (!canShowMessageMenu) return;
+
+      setMenuPosition({ x: e.clientX, y: e.clientY });
+      setShowMessageMenu(true);
+    },
+    [canShowMessageMenu],
+  );
+
+  // 收藏处理
+  const handleFavorite = useCallback(async () => {
+    try {
+      // 调用收藏接口，传递整个消息对象
+      let content: any = null;
+      if (message.contentType == 102) {
+        // 图片
+        content = message.pictureElem?.sourcePicture.url;
+      } else if (message.contentType == 101) {
+        content = message.textElem?.content;
+      } else if (message.contentType == 103) {
+        content = "";
+      }
+      let parms = {
+        conversationID: "123123131",
+        clientMsgID: message.clientMsgID,
+        serverMsgID: message.serverMsgID,
+        seq: message.seq,
+        msgData: JSON.stringify({
+          sendID: message.sendID,
+          recvID: message.recvID,
+          senderPlatformID: message.senderPlatformID,
+          senderNickname: message.senderNickname,
+          recvNickname: "", // 这个属性没有
+          sessionType: message.sessionType,
+          msgFrom: message.msgFrom,
+          contentType: message.contentType,
+          content: content,
+          status: message.status,
+          sendTime: message.sendTime,
+          createTime: message.createTime,
+          seq: message.seq,
+        }),
+        remark: "",
+      };
+      console.log("parms-------------", parms);
+      await createFavorite(
+        parms.conversationID,
+        parms.clientMsgID,
+        parms.serverMsgID,
+        parms.seq,
+        parms.msgData,
+        parms.remark,
+      );
+      feedbackToast({ msg: "收藏成功" });
+      // await favoriteMessage(message);
+      closeMessageMenu();
+    } catch (error) {
+      feedbackToast({ msg: "收藏消息失败", error });
+      console.error("收藏消息失败:", error);
+    }
+  }, [message]);
+
+  // 点击外部关闭菜单
+  useEffect(() => {
+    const handleClickOutside = () => {
+      if (showMessageMenu) {
+        closeMessageMenu();
+      }
+    };
+
+    document.addEventListener("click", handleClickOutside);
+    return () => {
+      document.removeEventListener("click", handleClickOutside);
+    };
+  }, [showMessageMenu, closeMessageMenu]);
 
   // 获取模拟已读状态
   const mockReadStatus = MockMessageReadStatusService.getMockReadStatus(
@@ -64,6 +146,7 @@ const MessageItem: FC<IMessageItemProps> = ({
       <div
         id={`chat_${message.clientMsgID}`}
         className={clsx("relative flex select-text px-5 py-3")}
+        onContextMenu={handleContextMenu}
       >
         <div
           className={clsx(
@@ -181,6 +264,14 @@ const MessageItem: FC<IMessageItemProps> = ({
           </div>
         </div>
       </div>
+
+      {showMessageMenu && (
+        <MessageMenu
+          position={menuPosition}
+          onClose={closeMessageMenu}
+          onFavorite={handleFavorite}
+        />
+      )}
     </>
   );
 };

@@ -22,25 +22,24 @@ export type FavoriteItem = {
   clientMsgID: string;
   serverMsgID: string;
   seq: number;
-  msgData: MsgData;
+  msgData: any;
   remark: string;
   createTime: number;
 };
 
 export const createFavorite = async (
-  userID: string,
   conversationID: string,
   clientMsgID: string,
   serverMsgID: string,
   seq: number,
-  msgData: MsgData,
+  msgData: any,
   remark: string,
 ): Promise<boolean> => {
   const fn = window.createFavorite;
   if (typeof fn !== "function") {
     throw new Error("WASM未暴露createFavorite函数");
   }
-  return fn(userID, conversationID, clientMsgID, serverMsgID, seq, msgData, remark);
+  return fn(conversationID, clientMsgID, serverMsgID, seq, msgData, remark);
 };
 
 /**
@@ -55,7 +54,9 @@ export const listFavorite = async (
   startTime: number,
   endTime: number,
 ): Promise<{
-  favorites: any; list: FavoriteItem[]; total: number 
+  favorites: any;
+  list: FavoriteItem[];
+  total: number;
 }> => {
   const fn = window.listFavorite;
   if (typeof fn !== "function") {

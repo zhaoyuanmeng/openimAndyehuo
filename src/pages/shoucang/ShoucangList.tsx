@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";  
 import { listFavorite } from "@/utils/wasmOther";  
-  
+import { v4 as uuidv4 } from "uuid";
 type Category = "all" | "file" | "media" | "composite";  
   
 interface FavItem {  
@@ -28,7 +28,7 @@ export const ShoucangList = ({ category }: ShoucangListProps) => {
     setLoading(true);  
     try {  
       const res = await listFavorite(  
-        "3351002245",  
+        uuidv4(),  
         JSON.stringify({ pageNumber: 1, showNumber: 20 }),  
         JSON.stringify([1]),  
         0,  

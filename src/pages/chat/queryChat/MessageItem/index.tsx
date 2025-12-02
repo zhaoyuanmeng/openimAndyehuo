@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import OIMAvatar from "@/components/OIMAvatar";
 import { formatMessageTime } from "@/utils/imCommon";
 import { MockMessageReadStatusService } from "@/services/mockMessageReadStatus";
-
+import { v4 as uuidv4 } from "uuid";
 import CatchMessageRender from "./CatchMsgRenderer";
 import MediaMessageRender from "./MediaMessageRender";
 import styles from "./message-item.module.scss";
@@ -75,7 +75,8 @@ const MessageItem: FC<IMessageItemProps> = ({
         content = "";
       }
       let parms = {
-        conversationID: "123123131",
+        operationID: uuidv4(),
+        conversationID: conversationID,
         clientMsgID: message.clientMsgID,
         serverMsgID: message.serverMsgID,
         seq: message.seq,
@@ -98,6 +99,7 @@ const MessageItem: FC<IMessageItemProps> = ({
       };
       console.log("parms-------------", parms);
       await createFavorite(
+        parms.operationID,
         parms.conversationID,
         parms.clientMsgID,
         parms.serverMsgID,
@@ -112,7 +114,7 @@ const MessageItem: FC<IMessageItemProps> = ({
       feedbackToast({ msg: "收藏消息失败", error });
       console.error("收藏消息失败:", error);
     }
-  }, [message]);
+  }, [message, conversationID]);
 
   // 点击外部关闭菜单
   useEffect(() => {

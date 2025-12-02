@@ -28,7 +28,8 @@ export type FavoriteItem = {
 };
 
 export const createFavorite = async (
-  conversationID: string,
+  operationID: string,
+  conversationID: string | undefined,
   clientMsgID: string,
   serverMsgID: string,
   seq: number,
@@ -39,7 +40,15 @@ export const createFavorite = async (
   if (typeof fn !== "function") {
     throw new Error("WASM未暴露createFavorite函数");
   }
-  return fn(conversationID, clientMsgID, serverMsgID, seq, msgData, remark);
+  return fn(
+    operationID,
+    conversationID,
+    clientMsgID,
+    serverMsgID,
+    seq,
+    msgData,
+    remark,
+  );
 };
 
 /**

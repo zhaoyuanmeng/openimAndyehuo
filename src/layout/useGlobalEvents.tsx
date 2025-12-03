@@ -125,40 +125,41 @@ export function useGlobalEvent() {
     try {
       const apiAddr = import.meta.env.VITE_API_URL;
       const wsAddr = import.meta.env.VITE_WS_URL;
-      // if (window.electronAPI) {
-      //   await IMSDK.initSDK({
-      //     platformID: window.electronAPI?.getPlatform() ?? 5,
-      //     apiAddr,
-      //     wsAddr,
-      //     dataDir: window.electronAPI.getDataPath("sdkResources") || "./",
-      //     logFilePath: window.electronAPI.getDataPath("logsPath") || "./",
-      //     logLevel: LogLevel.Debug,
-      //     isLogStandardOutput: true,
-      //     // isLogStandardOutput: false,
-      //     systemType: "electron",
-      //   });
-      //   await IMSDK.login({
-      //     userID: IMUserID,
-      //     token: IMToken,
-      //   });
-      // } else {
-      //   await IMSDK.login({
-      //     userID: IMUserID,
-      //     token: IMToken,
-      //     platformID: 5,
-      //     apiAddr,
-      //     wsAddr,
-      //     logLevel: LogLevel.Debug,
-      //   });
-      // }
-      await IMSDK.login({
-        userID: IMUserID,
-        token: IMToken,
-        platformID: 3,
-        apiAddr,
-        wsAddr,
-        logLevel: LogLevel.Debug,
-      });
+      if (window.electronAPI) {
+        console.log("初始化IMSDK...", window.electronAPI?.getPlatform());
+        await IMSDK.initSDK({
+          platformID: window.electronAPI?.getPlatform() ?? 5,
+          apiAddr,
+          wsAddr,
+          dataDir: window.electronAPI.getDataPath("sdkResources") || "./",
+          logFilePath: window.electronAPI.getDataPath("logsPath") || "./",
+          logLevel: LogLevel.Debug,
+          isLogStandardOutput: true,
+          // isLogStandardOutput: false,
+          systemType: "electron",
+        });
+        await IMSDK.login({
+          userID: IMUserID,
+          token: IMToken,
+        });
+      } else {
+        await IMSDK.login({
+          userID: IMUserID,
+          token: IMToken,
+          platformID: 5,
+          apiAddr,
+          wsAddr,
+          logLevel: LogLevel.Debug,
+        });
+      }
+      // await IMSDK.login({
+      //   userID: IMUserID,
+      //   token: IMToken,
+      //   platformID: 3,
+      //   apiAddr,
+      //   wsAddr,
+      //   logLevel: LogLevel.Debug,
+      // });
       initStore();
     } catch (error) {
       console.error(error);

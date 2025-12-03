@@ -3,7 +3,7 @@ import clsx from "clsx";
 import { FC, memo, useCallback, useRef, useState, useEffect } from "react";
 import { Avatar } from "antd";
 import { useTranslation } from "react-i18next";
-
+import { IMSDK } from "@/layout/MainContentWrap";
 import OIMAvatar from "@/components/OIMAvatar";
 import { formatMessageTime } from "@/utils/imCommon";
 import { MockMessageReadStatusService } from "@/services/mockMessageReadStatus";
@@ -97,16 +97,18 @@ const MessageItem: FC<IMessageItemProps> = ({
         }),
         remark: "",
       };
-      console.log("parms-------------", parms);
-      await createFavorite(
-        parms.operationID,
-        parms.conversationID,
-        parms.clientMsgID,
-        parms.serverMsgID,
-        parms.seq,
-        parms.msgData,
-        parms.remark,
-      );
+      console.log("createFavorite-------------", IMSDK.createFavorite);
+      await IMSDK.createFavorite(parms)
+      // console.log("parms-------------", parms);
+      // await createFavorite(
+      //   parms.operationID,
+      //   parms.conversationID,
+      //   parms.clientMsgID,
+      //   parms.serverMsgID,
+      //   parms.seq,
+      //   parms.msgData,
+      //   parms.remark,
+      // );
       feedbackToast({ msg: "收藏成功" });
       // await favoriteMessage(message);
       closeMessageMenu();

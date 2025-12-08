@@ -139,7 +139,8 @@ const MessageItem: FC<IMessageItemProps> = ({
 
   // 判断是否为群聊且为发送者
   const isGroupConversation = conversationID?.startsWith("sg_");
-  const shouldShowReadStatus = isGroupConversation && isSender;
+  // const shouldShowReadStatus = isGroupConversation && isSender;
+  const shouldShowReadStatus = false; // 先隐藏已读功能
 
   const toggleReadPanel = () => {
     setIsReadPanelExpanded(!isReadPanelExpanded);

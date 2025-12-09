@@ -38,7 +38,7 @@ body,
 }
 
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 0px;
   background-color: transparent;
 }
 ::-webkit-scrollbar-track {
@@ -58,7 +58,7 @@ body,
 
 #chat-list {
   &::-webkit-scrollbar {
-    width: 8px;
+    width: 0px;
   }
 }
 

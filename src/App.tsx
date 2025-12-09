@@ -9,7 +9,7 @@ import KeepAlive from "./keepalive";
 import AntdGlobalComp from "./AntdGlobalComp";
 import router from "./routes";
 import { useUserStore } from "./store";
-
+import Watermark from "./components/Watermark";
 function App() {
   const locale = useUserStore((state) => state.appSettings.locale);
   const queryClient = new QueryClient({
@@ -19,7 +19,7 @@ function App() {
       },
     },
   });
-
+  const isShowWatermark = true; // 是否显示水印，可以根据需要从配置或状态中获取
   return (
     <ConfigProvider
       autoInsertSpaceInButton={false}
@@ -40,6 +40,7 @@ function App() {
             >
               <RouterProvider router={router} />
             </KeepAlive>
+            {isShowWatermark && <Watermark />} {/* 水印 */}
           </AntdApp>
         </Suspense>
         <ReactQueryDevtools initialIsOpen={false} />
